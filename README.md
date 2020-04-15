@@ -1,13 +1,17 @@
 # adsorption_isotherm_fitting
 Fit temperature-dependent isotherms to equilibrium data.
 
-# Documentation
-coming soon!
+# Getting Started
 
-# Installation
+[Documentation](https://adsorption-isotherm-fitting.readthedocs.io/en/latest/)
+
+
+Installation
+============
 coming soon
 
-# Examples
+Examples
+========
 coming soon
 
 # See Also
