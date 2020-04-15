@@ -7,9 +7,12 @@ Welcome to adsorption_isotherm_fitting's documentation!
 =======================================================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
+   :numbered:
    :caption: Contents:
 
+   unaryisotherm
+   zreferences
 
 
 Indices and tables

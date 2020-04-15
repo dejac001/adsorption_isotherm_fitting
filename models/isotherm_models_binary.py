@@ -5,7 +5,7 @@ import pyomo.environ as pyo
 class BinaryIsotherms:
     def __init__(self, isodata, sorbate, otherSorbate):
         I = pyo.ConcreteModel()
-        I.points = pyo.RangeSet(0, len(isodata['q'][sorbate])-1)  #for rangeset, last point is also included
+        I.points = pyo.RangeSet(0, len(isodata['q_i'][sorbate])-1)  #for rangeset, last point is also included
         I.main_sorbate = pyo.Param(initialize=sorbate)
         I.otherSorbate = pyo.Param(initialize=otherSorbate)
         I.sorbates = pyo.Set(initialize=[sorbate, otherSorbate])
@@ -14,8 +14,8 @@ class BinaryIsotherms:
             return isodata['p'][sorbate][point]
         I.p = pyo.Param(I.sorbates, I.points, initialize=_init_pressures)
 
-        I.loadings = pyo.Param(I.points, initialize={i:isodata['q'][sorbate][i] for i in I.points})
-        I.max_loading = pyo.Param(initialize=np.max(isodata['q'][sorbate]))
+        I.loadings = pyo.Param(I.points, initialize={i:isodata['q_i'][sorbate][i] for i in I.points})
+        I.max_loading = pyo.Param(initialize=np.max(isodata['q_i'][sorbate]))
 
         def _init_Q(m, point):
             return m.loadings[point] * 0.5
