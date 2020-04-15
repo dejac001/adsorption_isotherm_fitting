@@ -63,8 +63,8 @@ class UnaryIsotherm(pyo.ConcreteModel):
             self.T_ref = max(T)
 
         self.p_star = [i/self.p_ref for i in self.p_i]
-        self.theta = [i/self.q_ref for i in self.theta]
-        self.T_star = [i/self.T_Ref for i in self.T]
+        self.theta = [i/self.q_ref for i in self.q_i]
+        self.T_star = [i/self.T_ref for i in self.T]
 
         self.theta_calc = pyo.Var(self.points, initialize=1., bounds=(0., None))
         self.objective = pyo.Objective(expr=self.objective_rule(), sense=pyo.minimize)
@@ -159,7 +159,7 @@ class LangmuirUnary(UnaryIsotherm):
         self.A_i = pyo.Var(initialize=-1., bounds=(None, 0.))
         self.M_i_star = pyo.Var(initialize=0.5, bounds=(0., 1.))
 
-        self.isotherm_eq = pyo.Constraint(self.points, rule=self.isotherm_eq_rule)
+        self.isotherm_eq = pyo.Constraint(self.points, rule=LangmuirUnary.isotherm_eq_rule)
 
         # add expressions for dimensional quantities
         self.R = R
