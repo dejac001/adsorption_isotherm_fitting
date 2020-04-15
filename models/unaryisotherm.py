@@ -1,4 +1,5 @@
 import pyomo.environ as pyo
+from .default_solver import default_solver
 from .constants import R
 import numpy as np
 
@@ -92,6 +93,18 @@ class UnaryIsotherm(pyo.ConcreteModel):
             (self.theta[i]-self.theta_calc[i])*(self.theta[i]-self.theta_calc[i]) for i in self.points
         )
 
+    def solve(self, solver=None, **kwargs):
+        """Solve constraints subject to objective function
+
+        :param solver: solver for solving model equations, defaults to pyo.SolverFactory('ipopt')
+        :type solver: pyo.SolverFactory, optional
+        :param kwargs: for solve argument
+        """
+        if solver is None:
+            solver = default_solver
+
+        solver.solve(self, **kwargs)
+
 
 class LangmuirUnary(UnaryIsotherm):
     r"""Temperature-dependent unary Langmuir isotherm, expressed as
@@ -129,7 +142,12 @@ class LangmuirUnary(UnaryIsotherm):
     :type A_i: pyo.Var
     :param M_i_star: :math:`M_i^\star`, dimensionless saturation loading
     :type M_i_star: pyo.Var
-    :
+    :param M_i: langmuir saturaiton loading
+    :type M_i: pyo.Expression
+    :param k_i_inf: langmuir adsorption constant independent of temperature
+    :type k_i_inf: pyo.Expression
+    :param dH_i: heat of adsorption of component *i*
+    :type dH_i: pyo.Expression
     :param R: gas constant
     :type R: float
     """

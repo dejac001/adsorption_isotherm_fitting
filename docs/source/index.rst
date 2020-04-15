@@ -11,6 +11,7 @@ Welcome to adsorption_isotherm_fitting's documentation!
    :numbered:
    :caption: Contents:
 
+   default_solver
    unaryisotherm
    zreferences
 
