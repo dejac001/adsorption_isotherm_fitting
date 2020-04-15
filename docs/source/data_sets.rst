@@ -1,4 +1,4 @@
 Data Sets
 =========
 
-.. include:: data_sets.README.rst
+.. include:: ../../data_sets/README.rst

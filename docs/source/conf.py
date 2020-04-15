@@ -35,7 +35,7 @@ extensions = [
     'sphinx.ext.autodoc', 'sphinx.ext.coverage',
     'sphinx.ext.todo', 'sphinx.ext.viewcode',
     'sphinx.ext.graphviz',
-    'sphinx.ext.mathjax', 'sphinx.ext.ifconfig', 'sphinx.ext.githubpages', #'sphinx.ext.doctest', 'sphinx.ext.intersphinx',
+    'sphinx.ext.mathjax', 'sphinx.ext.ifconfig', #'sphinx.ext.doctest', 'sphinx.ext.intersphinx',
     'sphinxcontrib.bibtex'
 ]
 
