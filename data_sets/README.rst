@@ -27,5 +27,9 @@ Molecular simulation from :cite:`Shah2015`,
     :widths: 20 20 20 20 20
     :file: H2S_MFI.csv
 
+.. csv-table:: H2S/CH4 Binary adsorption on MFI, taken from tables in SI
+    :widths: 20 20 20 20 20 20 20 20 20 20 20 20 20
+    :file: CH4_H2S_MFI_binary.csv
+
 
 .. bibliography:: ../source/references.bib
