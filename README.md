@@ -16,7 +16,8 @@ Examples
 H2S/CH4 on MFI Zeolite
 ----------------------
 
-Fit temperature-dependent Langmuir unary and binary isotherms for H2S/CH4 mixture isotherms [^1].
+Fit temperature-dependent Langmuir unary and binary isotherms for H2S/CH4 mixture isotherms.
+Data for fitting taken from [Shah et al, 2015](doi.org/10.1021/acs.langmuir.5b03015).
 
 Example script [here](examples/h2s_ch4.py)
 
@@ -26,8 +27,6 @@ Example script [here](examples/h2s_ch4.py)
         width="640"
     />
 </p>
-
-[^1]: Shah, MS; Tsapatsis, M; and Siepmann, JI. “Monte Carlo Simulations Probing the Adsorptive Separation of Hydrogen Sulfide/Methane Mixtures Using All-Silica Zeolites.” 2015. Langmuir 31: 12268–78. doi:10.1021/acs.langmuir.5b03015.
 
 # See Also
 [PyGAPS](https://github.com/pauliacomi/pyGAPS)
