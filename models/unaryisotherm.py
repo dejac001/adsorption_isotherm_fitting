@@ -1,4 +1,5 @@
 import pyomo.environ as pyo
+import matplotlib.pyplot as plt
 from .default_solver import default_solver
 from .constants import R
 import numpy as np
@@ -21,7 +22,7 @@ class UnaryIsotherm(pyo.ConcreteModel):
         T^\star = \frac{T}{T_\text{ref}}
         :label: eq_Ts
 
-    :param p_i: pressures (or concentrations) of component *i*
+    :param p_i: pressures (or fugacities) of component *i*
     :type p_i: list
     :param q_i: loadings of component *i*
     :type q_i: list
@@ -41,6 +42,8 @@ class UnaryIsotherm(pyo.ConcreteModel):
     :type T_ref: float, optional
     :param q_calc: calculated loading in units
     :type q_calc: pyo.Expression, derived
+    :param R: gas constant, set to 8.314 J/mol/K [=] m**3*Pa/mol/K
+    :type R: float, hard-coded
     """
     def __init__(self, p_i, q_i, T, q_ref=None, p_ref=None, T_ref=None):
         pyo.ConcreteModel.__init__(self)
@@ -48,6 +51,7 @@ class UnaryIsotherm(pyo.ConcreteModel):
         assert len(p_i) == len(q_i), 'Inconsistent input data'
         assert len(p_i) == len(T), 'Inconsistent number of temperatures'
 
+        self.R = R
         self.points = pyo.Set(initialize=list(range(len(p_i))), ordered=True)
         self.p_i = p_i
         self.q_i = q_i
@@ -58,13 +62,13 @@ class UnaryIsotherm(pyo.ConcreteModel):
 
         # override defaults
         if self.q_ref is None:
-            self.q_ref = max(q_i)
+            self.q_ref = float(max(q_i))
         if self.p_ref is None:
-            self.p_ref = max(p_i)
+            self.p_ref = float(max(p_i))
         if self.T_ref is None:
-            self.T_ref = max(T)
+            self.T_ref = float(max(T))
 
-        self.p_star = [i/self.p_ref for i in self.p_i]
+        self.p_i_star = [i / self.p_ref for i in self.p_i]
         self.theta = [i/self.q_ref for i in self.q_i]
         self.T_star = [i/self.T_ref for i in self.T]
 
@@ -73,10 +77,14 @@ class UnaryIsotherm(pyo.ConcreteModel):
         self.q_calc = pyo.Expression(self.points, rule=UnaryIsotherm.q_calc_expr)
         self.objective = pyo.Objective(expr=self.objective_rule(), sense=pyo.minimize)
 
+    def isotherm_eq_rule(self, point):
+        """Constraint for dimensionless expression"""
+        return self.theta_calc[point] == self.dimensionless_isotherm_expression(point)
+
     def q_calc_expr(self, point):
         return self.theta_calc[point]*self.q_ref
 
-    def isotherm_eq_rule(self, point):
+    def dimensionless_isotherm_expression(self, point):
         raise NotImplementedError
 
     def get_R2(self):
@@ -112,9 +120,8 @@ class UnaryIsotherm(pyo.ConcreteModel):
 
         solver.solve(self, **kwargs)
 
-    def plot(self, ax=None):
+    def plot_unary(self, ax=None):
         if ax is None:
-            import matplotlib.pyplot as plt
             fig = plt.figure()
             ax = fig.add_subplot(111)
             ax.set_xlabel('p_i')
@@ -126,9 +133,8 @@ class UnaryIsotherm(pyo.ConcreteModel):
         ax.plot(self.p_i, self.q_i, 'o', label='Raw Data units')
         ax.plot(self.p_i, q_calc, 'x', label='Fit units')
 
-    def plot_dimensionless(self, ax=None):
+    def plot_unary_dimensionless(self, ax=None):
         if ax is None:
-            import matplotlib.pyplot as plt
             fig = plt.figure()
             ax = fig.add_subplot(111)
             ax.set_xlabel('p_i')
@@ -136,11 +142,43 @@ class UnaryIsotherm(pyo.ConcreteModel):
 
         vals = self.theta_calc.extract_values()
         theta_calc = [vals[i] for i in self.points]
-        ax.plot(self.p_star, self.theta, 'o', label='Raw data dimensionless')
-        ax.plot(self.p_star, theta_calc, 'x', label='Fit dimensionless')
+        ax.plot(self.p_i_star, self.theta, 'o', label='Raw data dimensionless')
+        ax.plot(self.p_i_star, theta_calc, 'x', label='Fit dimensionless')
 
     def get_objective(self):
         return pyo.value(self.objective)
+
+    def plot_comparison_base(self, q_i, q_calc, xlabel, ylabel, fig=None, ax=None, marker='x', **kwargs):
+        if fig is None:
+            fig = plt.figure()
+        if ax is None:
+            ax = fig.add_subplot(111)
+            ax.set_xlabel(xlabel)
+            ax.set_ylabel(ylabel)
+        if not kwargs:
+            kwargs = dict(color='C1')
+
+        ax.plot(q_i, q_calc, marker, **kwargs)
+
+        max_q = max(q_i + q_calc)
+        ax.plot([0., max_q], [0., max_q], '--', color='black')
+        return fig, ax
+
+    def plot_comparison_units(self, **kwargs):
+        xlabel = 'Loading from Raw Data, with units'
+        ylabel = 'Predicted Loading from Fit, with units'
+
+        vals = self.q_calc.extract_values()
+        q_calc = [pyo.value(vals[i]) for i in self.points]
+        return self.plot_comparison_base(self.q_i, q_calc, xlabel, ylabel, **kwargs)
+
+    def plot_comparison_dimensionless(self, **kwargs):
+        xlabel = 'Loading from Raw Data, dimensionless'
+        ylabel = 'Predicted Loading from Fit, dimensionless'
+
+        vals = self.theta_calc.extract_values()
+        theta_calc = [vals[i] for i in self.points]
+        return self.plot_comparison_base(self.theta, theta_calc, xlabel, ylabel, **kwargs)
 
 
 class LangmuirUnary(UnaryIsotherm):
@@ -185,24 +223,47 @@ class LangmuirUnary(UnaryIsotherm):
     :type k_i_inf: pyo.Expression
     :param dH_i: heat of adsorption of component *i*
     :type dH_i: pyo.Expression
-    :param R: gas constant
-    :type R: float
     """
     def __init__(self, *args, **kwargs):
         UnaryIsotherm.__init__(self, *args, **kwargs)
 
         # add variables
-        self.H_i_star = pyo.Var(initialize=10.)
-        self.A_i = pyo.Var(initialize=-3.)
-        self.M_i_star = pyo.Var(initialize=0.5)
+        self.H_i_star = pyo.Var(initialize=self.initial_guess_H_i_star())
+        self.A_i = pyo.Var(initialize=self.initial_guess_A_i())
+        self.M_i_star = pyo.Var(initialize=self.initial_guess_M_i_star())
 
         # add expressions for dimensional quantities
-        self.R = R
         self.M_i = pyo.Expression(expr=self.M_i_star*self.q_ref)
         self.k_i_inf = pyo.Expression(expr=pyo.exp(self.A_i) / self.p_ref)
         self.dH_i = pyo.Expression(expr=self.R*self.T_ref*self.H_i_star)
 
         self.isotherm_eq = pyo.Constraint(self.points, rule=LangmuirUnary.isotherm_eq_rule)
+
+    def initial_guess_H_i_star(self):
+        r"""Initial guess for :math:`H_i^\star` variable
+
+        This value of 10 corresponds to an absolute value for heat of adsorption of :math:`10RT`
+        which is approximately 25 kJ/mol
+        """
+        return -10.
+
+    def initial_guess_A_i(self):
+        r"""Initial guess for :math:`A_i` variable
+
+
+        .. todo::
+            Come up with logical initial guess
+
+        """
+        return -1.
+
+    def initial_guess_M_i_star(self):
+        r"""Initial guess for :math:`M_i^\star` variable
+
+        If :math:`q_\text{ref}` is chosen to be the saturation loading, :math:`M_i^\star` will be 1.
+        Thus, we return 1 as initial guess
+        """
+        return 1.
 
     def isotherm_expression(self, point):
         """Isotherm expression in unit quantities, see Equation :eq:`eq_lang_unary`"""
@@ -211,9 +272,5 @@ class LangmuirUnary(UnaryIsotherm):
 
     def dimensionless_isotherm_expression(self, point):
         """Dimensionless isotherm expression, see Equation :eq:`eq_lang_unary_dimensionless`"""
-        K = pyo.exp(self.A_i - self.H_i_star / self.T_star[point]) * self.p_star[point]
+        K = pyo.exp(self.A_i - self.H_i_star / self.T_star[point]) * self.p_i_star[point]
         return self.M_i_star * K / (1. + K)
-
-    def isotherm_eq_rule(self, point):
-        """Constraint for dimensionless expression"""
-        return self.theta_calc[point] == self.dimensionless_isotherm_expression(point)
