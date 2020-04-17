@@ -17,7 +17,7 @@ H2S/CH4 on MFI Zeolite
 ----------------------
 
 Fit temperature-dependent Langmuir unary and binary isotherms for H2S/CH4 mixture isotherms.
-Data for fitting taken from [Shah et al, 2015](doi.org/10.1021/acs.langmuir.5b03015).
+Data for fitting taken from [Shah et al, 2015](https://doi.org/10.1021/acs.langmuir.5b03015).
 
 Example script [here](examples/h2s_ch4.py)
 
