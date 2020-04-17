@@ -1,0 +1,36 @@
+R2 : Size=1
+    Key  : Value
+    None : 0.9988281256469734
+objective : Size=1, Index=None, Active=True
+    Key  : Active : Value
+    None :   True : 0.018699503890163168
+H_i_star : Size=1, Index=None
+    Key  : Lower : Value               : Upper : Fixed : Stale : Domain
+    None :  None : -11.073113090152626 :  None : False : False :  Reals
+A_i : Size=1, Index=None
+    Key  : Lower : Value               : Upper : Fixed : Stale : Domain
+    None :  None : -7.3257215411694325 :  None : False : False :  Reals
+M_i_star : Size=1, Index=None
+    Key  : Lower : Value              : Upper : Fixed : Stale : Domain
+    None :   0.0 : 1.0189875126880654 :  None : False : False :  Reals
+M_i : Size=1
+    Key  : Value
+    None : 3.1374625515665535
+k_i_inf : Size=1
+    Key  : Value
+    None : 1.3876132560839548e-10
+dH_i : Size=1
+    Key  : Value
+    None : -31577.218745414426
+H_j_star : Size=1, Index=None
+    Key  : Lower : Value              : Upper : Fixed : Stale : Domain
+    None :  None : -8.149936908396562 :  None : False : False :  Reals
+A_j : Size=1, Index=None
+    Key  : Lower : Value              : Upper : Fixed : Stale : Domain
+    None :  None : -7.116555430817592 :  None : False : False :  Reals
+k_j_inf : Size=1
+    Key  : Value
+    None : 1.7104411157339947e-10
+dH_j : Size=1
+    Key  : Value
+    None : -23241.191381548295
