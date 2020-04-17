@@ -10,7 +10,7 @@ class BinaryIsotherm(UnaryIsotherm):
 
     .. math::
         p_j^\star = \frac{p_j}{p_\text{ref}}
-        :label: eq_pis
+        :label: eq_pjs
 
     :param p_j: pressures (or fugacities) of component *j*
     :type p_j: list
@@ -61,7 +61,7 @@ class BinaryLangmuir(BinaryIsotherm, LangmuirUnary):
 
     Arrhenius relationships are used for :math:`k_i`  and :math:`k_j`,
     and dimensionless variables are used as
-    illustrated in :ref:`models.unaryisotherm.LangmuirUnary`
+    illustrated in :class:`models.unaryisotherm.LangmuirUnary`
 
     .. note::
         This isotherm is not equivalent to the conventional extended langmuir isotherm,
@@ -75,8 +75,7 @@ class BinaryLangmuir(BinaryIsotherm, LangmuirUnary):
             k_j &= k_{j,\infty}\exp\left(\frac{-\Delta H_j}{RT}\right)\\
         \end{align}
 
-    Introducing the dimensionless parameters in Equation :eq:`eq_theta` :eq:`eq_pis` and :eq:`eq_Ts`,
-    the dimensionless variables to be fit are
+    The dimensionless variables to be fit are
 
     .. math::
         \begin{align}
@@ -151,7 +150,3 @@ class BinaryLangmuir(BinaryIsotherm, LangmuirUnary):
 
         K_j = pyo.exp(self.A_j - self.H_j_star / self.T_star[point]) * self.p_j_star[point]
         return self.M_i_star * K_i / (1. + K_i + K_j)
-
-
-if __name__ == '__main__':
-    I = BinaryLangmuir()

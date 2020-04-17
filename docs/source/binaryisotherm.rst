@@ -1,8 +1,8 @@
 Binary Isotherms
 ================
 
-.. autoclass:: models.unaryisotherm.BinaryIsotherm
+.. autoclass:: models.binaryisotherm.BinaryIsotherm
     :members:
 
-.. autoclass:: models.unaryisotherm.BinaryLangmuir
+.. autoclass:: models.binaryisotherm.BinaryLangmuir
     :members:
