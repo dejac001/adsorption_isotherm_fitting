@@ -45,8 +45,12 @@ class UnaryIsotherm(pyo.ConcreteModel):
     :param R: gas constant, set to 8.314 J/mol/K [=] m**3*Pa/mol/K
     :type R: float, hard-coded
     """
-    def __init__(self, p_i, q_i, T, q_ref=None, p_ref=None, T_ref=None):
-        pyo.ConcreteModel.__init__(self)
+    def __init__(self, p_i, q_i, T, q_ref=None, p_ref=None, T_ref=None, **kwargs):
+        """
+
+        :param kwargs: passed to :code:`pyo.ConcreteModel`
+        """
+        pyo.ConcreteModel.__init__(self, **kwargs)
 
         assert len(p_i) == len(q_i), 'Inconsistent input data'
         assert len(p_i) == len(T), 'Inconsistent number of temperatures'
@@ -75,11 +79,16 @@ class UnaryIsotherm(pyo.ConcreteModel):
         self.theta_calc = pyo.Var(self.points, initialize=1., bounds=(0., None))
 
         self.q_calc = pyo.Expression(self.points, rule=UnaryIsotherm.q_calc_expr)
+        self.R2 = pyo.Expression(expr=self.R2_rule())
         self.objective = pyo.Objective(expr=self.objective_rule(), sense=pyo.minimize)
 
     def isotherm_eq_rule(self, point):
         """Constraint for dimensionless expression"""
         return self.theta_calc[point] == self.dimensionless_isotherm_expression(point)
+
+    def display_fit_quality(self, **kwargs):
+        self.R2.display(**kwargs)
+        self.objective.display(**kwargs)
 
     def q_calc_expr(self, point):
         return self.theta_calc[point]*self.q_ref
@@ -87,11 +96,12 @@ class UnaryIsotherm(pyo.ConcreteModel):
     def dimensionless_isotherm_expression(self, point):
         raise NotImplementedError
 
-    def get_R2(self):
+    def R2_rule(self):
         """Calculate coefficient of determination squared, :math:`R^2` """
-        q_mean = np.mean(self.theta)
-        ss_tot = np.sum([(i-q_mean)*(i-q_mean) for i in self.theta])
-        ss_res = pyo.value(self.objective)
+        # q_mean = pyo.summation(self.theta) / len(self.points)
+        q_mean = sum(self.theta[i] for i in self.points) / len(self.points)
+        ss_tot = sum((self.theta[i] - q_mean)*(self.theta[i] - q_mean) for i in self.points)
+        ss_res = self.objective_rule()
         return 1 - ss_res/ss_tot
 
     def objective_rule(self):
@@ -145,9 +155,6 @@ class UnaryIsotherm(pyo.ConcreteModel):
         ax.plot(self.p_i_star, self.theta, 'o', label='Raw data dimensionless')
         ax.plot(self.p_i_star, theta_calc, 'x', label='Fit dimensionless')
 
-    def get_objective(self):
-        return pyo.value(self.objective)
-
     def plot_comparison_base(self, q_i, q_calc, xlabel, ylabel, fig=None, ax=None, marker='x', **kwargs):
         if fig is None:
             fig = plt.figure()
@@ -179,6 +186,9 @@ class UnaryIsotherm(pyo.ConcreteModel):
         vals = self.theta_calc.extract_values()
         theta_calc = [vals[i] for i in self.points]
         return self.plot_comparison_base(self.theta, theta_calc, xlabel, ylabel, **kwargs)
+
+    def display_results(self, **kwargs):
+        self.display_fit_quality(**kwargs)
 
 
 class LangmuirUnary(UnaryIsotherm):
@@ -274,3 +284,12 @@ class LangmuirUnary(UnaryIsotherm):
         """Dimensionless isotherm expression, see Equation :eq:`eq_lang_unary_dimensionless`"""
         K = pyo.exp(self.A_i - self.H_i_star / self.T_star[point]) * self.p_i_star[point]
         return self.M_i_star * K / (1. + K)
+
+    def display_results(self, **kwargs):
+        super().display_results(**kwargs)
+        self.H_i_star.display(**kwargs)
+        self.A_i.display(**kwargs)
+        self.M_i_star.display(**kwargs)
+        self.M_i.display(**kwargs)
+        self.k_i_inf.display(**kwargs)
+        self.dH_i.display(**kwargs)

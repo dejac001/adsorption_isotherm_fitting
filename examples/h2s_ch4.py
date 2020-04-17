@@ -19,12 +19,14 @@ def main():
         [p_i[i] for i in unary_points],
         [q_i[i] for i in unary_points],
         [T[i] for i in unary_points],
+        name='H2S_unary'
     )
     h2s_binary = BinaryLangmuir(
         [p_i[i] for i in all_points],
         [p_j[i] for i in all_points],
         [q_i[i] for i in all_points],
-        [T[i] for i in all_points]
+        [T[i] for i in all_points],
+        name='H2S_binary'
     )
 
     # step 3: get CH4 data
@@ -39,21 +41,21 @@ def main():
         [p_i[i] for i in unary_points],
         [q_i[i] for i in unary_points],
         [T[i] for i in unary_points],
+        name='CH4_unary'
     )
     ch4_binary = BinaryLangmuir(
         [p_i[i] for i in all_points],
         [p_j[i] for i in all_points],
         [q_i[i] for i in all_points],
-        [T[i] for i in all_points]
+        [T[i] for i in all_points],
+        name='CH4_binary'
     )
 
-    # step 5: solve unary models and assess quality of fit
-    ch4_unary.solve()
-    h2s_unary.solve()
-    print('R2 H2S unary: ', h2s_unary.get_R2())
-    print('SSE H2S unary: ', h2s_unary.get_objective())
-    print('R2 CH4 unary: ', ch4_unary.get_R2())
-    print('SSE CH4 unary: ', ch4_unary.get_objective())
+    # step 5: solve unary models, and print results to file
+    for model in ch4_unary, h2s_unary:
+        model.solve()
+        with open(model.name + '.output', 'w') as f:
+            model.display_results(ostream=f)
 
     # step 6: plot unary models
     fig = plt.figure()
@@ -72,13 +74,11 @@ def main():
     ch4_binary.A_j = pyo.value(h2s_unary.A_i)
     ch4_binary.H_j_star = pyo.value(h2s_unary.H_i_star)
 
-    # step 8: solve binary models and assess quality of fit
-    h2s_binary.solve()
-    ch4_binary.solve()
-    print('R2 H2S binary: ', h2s_binary.get_R2())
-    print('SSE H2S binary: ', h2s_binary.get_objective())
-    print('R2 CH4 binary: ', ch4_binary.get_R2())
-    print('SSE CH4 binary: ', ch4_binary.get_objective())
+    # step 8: solve binary models write results to file
+    for model in ch4_binary, h2s_binary:
+        model.solve()
+        with open(model.name + '.output', 'w') as f:
+            model.display_results(ostream=f)
 
     # step 9: add binary models to plot
     h2s_binary.plot_comparison_dimensionless(fig=fig, ax=ax, color='purple', marker='d', markerfacecolor='None', label='H2S binary')

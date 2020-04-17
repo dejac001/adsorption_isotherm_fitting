@@ -150,3 +150,10 @@ class BinaryLangmuir(BinaryIsotherm, LangmuirUnary):
 
         K_j = pyo.exp(self.A_j - self.H_j_star / self.T_star[point]) * self.p_j_star[point]
         return self.M_i_star * K_i / (1. + K_i + K_j)
+
+    def display_results(self, **kwargs):
+        super().display_results(**kwargs)
+        self.H_j_star.display(**kwargs)
+        self.A_j.display(**kwargs)
+        self.k_j_inf.display(**kwargs)
+        self.dH_j.display(**kwargs)
