@@ -1,0 +1,24 @@
+R2 : Size=1
+    Key  : Value
+    None : 0.9979622016258289
+objective : Size=1, Index=None, Active=True
+    Key  : Active : Value
+    None :   True : 0.007229102369970377
+H_i_star : Size=1, Index=None
+    Key  : Lower : Value              : Upper : Fixed : Stale : Domain
+    None :  None : -7.287194838464342 :  None : False : False :  Reals
+A_i : Size=1, Index=None
+    Key  : Lower : Value              : Upper : Fixed : Stale : Domain
+    None :  None : -10.14821438563906 :  None : False : False :  Reals
+M_i_star : Size=1, Index=None
+    Key  : Lower : Value              : Upper : Fixed : Stale : Domain
+    None :  None : 3.7193602559381795 :  None : False : False :  Reals
+M_i : Size=1
+    Key  : Value
+    None : 8.95582798469325
+k_i_inf : Size=1
+    Key  : Value
+    None : 3.8656918601559114e-10
+dH_i : Size=1
+    Key  : Value
+    None : -20780.908095238443

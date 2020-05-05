@@ -130,9 +130,10 @@ class UnaryIsotherm(pyo.ConcreteModel):
 
         solver.solve(self, **kwargs)
 
-    def plot_unary(self, ax=None):
-        if ax is None:
+    def plot_unary(self, ax=None, fig=None):
+        if fig is None:
             fig = plt.figure()
+        if ax is None:
             ax = fig.add_subplot(111)
             ax.set_xlabel('p_i')
             ax.set_ylabel('q_i')
@@ -142,10 +143,12 @@ class UnaryIsotherm(pyo.ConcreteModel):
 
         ax.plot(self.p_i, self.q_i, 'o', label='Raw Data units')
         ax.plot(self.p_i, q_calc, 'x', label='Fit units')
+        return fig, ax
 
-    def plot_unary_dimensionless(self, ax=None):
-        if ax is None:
+    def plot_unary_dimensionless(self, ax=None, fig=None):
+        if fig is None:
             fig = plt.figure()
+        if ax is None:
             ax = fig.add_subplot(111)
             ax.set_xlabel('p_i')
             ax.set_ylabel('q_i')
@@ -154,6 +157,7 @@ class UnaryIsotherm(pyo.ConcreteModel):
         theta_calc = [vals[i] for i in self.points]
         ax.plot(self.p_i_star, self.theta, 'o', label='Raw data dimensionless')
         ax.plot(self.p_i_star, theta_calc, 'x', label='Fit dimensionless')
+        return fig, ax
 
     def plot_comparison_base(self, q_i, q_calc, xlabel, ylabel, fig=None, ax=None, marker='x', **kwargs):
         if fig is None:
