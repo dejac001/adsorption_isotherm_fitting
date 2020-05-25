@@ -1,3 +1,0 @@
-FROM dejac001/isotherm-fitting
-
-RUN pip3 install Sphinx sphinx_rtd_theme recommonmark sphinxcontrib-bibtex
