@@ -1,0 +1,9 @@
+FROM dejac001/ipopt-base
+
+MAINTAINER Robert F. DeJaco <dejac001@umn.edu>
+USER root
+
+RUN cd /home/ && git clone https://github.com/dejac001/CoinIpopt.git \
+    && cd /home/CoinIpopt/ && mkdir build && cd build \
+    && ../configure && make && make install \
+    && ln -sf /home/CoinIpopt/build/bin/ipopt /usr/bin/ipopt

@@ -1,0 +1,6 @@
+FROM dejac001/coinipopt
+
+MAINTAINER Robert F. DeJaco <dejac001@umn.edu>
+USER root
+
+RUN apt-get -y install python3 python3-pip && pip3 install Pyomo && mkdir -p /home/pyomo/shared/

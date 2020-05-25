@@ -1,8 +1,7 @@
 import pyomo.environ as pyo
 import matplotlib.pyplot as plt
-from .default_solver import default_solver
+from models import solver as default_solver
 from chem_util.chem_constants import gas_constant as R
-import numpy as np
 
 
 class UnaryIsotherm(pyo.ConcreteModel):
@@ -124,16 +123,13 @@ class UnaryIsotherm(pyo.ConcreteModel):
             (self.theta[i]-self.theta_calc[i])*(self.theta[i]-self.theta_calc[i]) for i in self.points
         )
 
-    def solve(self, solver=None, **kwargs):
+    def solve(self, solver=default_solver, **kwargs):
         """Solve constraints subject to objective function
 
         :param solver: solver for solving model equations, defaults to pyo.SolverFactory('ipopt')
         :type solver: pyo.SolverFactory, optional
         :param kwargs: for solve argument
         """
-        if solver is None:
-            solver = default_solver
-
         solver.solve(self, **kwargs)
 
     def plot_unary(self, ax=None, fig=None):

@@ -1,0 +1,11 @@
+docker build -t dejac001/ipopt-base -f Dockerfiles/Dockerfile.ipopt-base . && docker push dejac001/ipopt-base
+
+docker build -t dejac001/coinipopt -f Dockerfiles/Dockerfile.ipopt . && docker push dejac001/coinipopt
+
+docker build -t dejac001/pyomoipopt -f Dockerfiles/Dockerfile.pyomoipopt . && docker push dejac001/pyomoipopt
+
+docker build -t dejac001/isotherm-fitting -f Dockerfiles/Dockerfile . && docker push dejac001/isotherm-fitting
+
+docker build -t dejac001/isotherm-fitting-tests -f Dockerfiles/Dockerfile.tests . && docker push dejac001/isotherm-fitting-tests
+
+docker build -t dejac001/isotherm-fitting-docs -f Dockerfiles/Dockerfile.docs . && docker push dejac001/isotherm-fitting-docs
