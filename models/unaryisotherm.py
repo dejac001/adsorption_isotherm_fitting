@@ -1,7 +1,7 @@
 import pyomo.environ as pyo
 import matplotlib.pyplot as plt
 from .default_solver import default_solver
-from .constants import R
+from chem_util.chem_constants import gas_constant as R
 import numpy as np
 
 
@@ -103,6 +103,12 @@ class UnaryIsotherm(pyo.ConcreteModel):
         ss_tot = sum((self.theta[i] - q_mean)*(self.theta[i] - q_mean) for i in self.points)
         ss_res = self.objective_rule()
         return 1 - ss_res/ss_tot
+
+    def get_R2(self):
+        return pyo.value(self.R2)
+
+    def get_objective(self):
+        return pyo.value(self.objective)
 
     def objective_rule(self):
         r"""Sum of squared errors between calculated loading and predicted loading
