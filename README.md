@@ -1,5 +1,6 @@
 # adsorption_isotherm_fitting
 [![DOI](https://zenodo.org/badge/255999657.svg)](https://zenodo.org/badge/latestdoi/255999657)
+[![Documentation Status](https://readthedocs.org/projects/adsorption-isotherm-fitting/badge/?version=latest)](https://adsorption-isotherm-fitting.readthedocs.io/en/latest/?badge=latest)
 
 Fit temperature-dependent isotherms to equilibrium data.
 
