@@ -11,9 +11,9 @@ Welcome to adsorption_isotherm_fitting's documentation!
    :numbered:
    :caption: Contents:
 
+   installation
    unaryisotherm
    binaryisotherm
-   default_solver
    data_sets
 
 
