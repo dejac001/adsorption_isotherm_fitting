@@ -34,7 +34,7 @@ Molecular simulation from :cite:`Shah2015`,
 Fugacity coefficients and fugacities
 ************************************
 
-Calculated from SciThermo python package using virial equation of state.
+Calculated from :code`RealGas` python package using virial equation of state.
 The critical temperatures and densities were obtained from the TraPPE website.
 The accentric factors and critical compressibilities were obtained from DIPPR :cite:`DIPPR`.
 The critical pressure was calculated from all the other critical properties above.

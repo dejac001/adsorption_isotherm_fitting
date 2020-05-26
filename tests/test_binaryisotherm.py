@@ -1,4 +1,4 @@
-from models.binaryisotherm import BinaryLangmuir
+from isotherm_models.binaryisotherm import BinaryLangmuir
 import pandas as pd
 
 

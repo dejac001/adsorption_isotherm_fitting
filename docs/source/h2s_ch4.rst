@@ -12,8 +12,8 @@ First, we import the necessary packages
 >>> import pyomo.environ as pyo
 >>> import matplotlib.pyplot as plt
 >>> import pandas as pd
->>> from models.unaryisotherm import LangmuirUnary
->>> from models.binaryisotherm import BinaryLangmuir
+>>> from isotherm_models.unaryisotherm import LangmuirUnary
+>>> from isotherm_models.binaryisotherm import BinaryLangmuir
 
 First, we grab the data for adsorption of H2S:
 
@@ -28,7 +28,7 @@ We can do this with a list comprehension as below
 
 >>> all_points = [i for i in range(len(q_i)) if q_i[i] > 0.]
 
-Now, we can create a model with all of these points. We choose the :class:`.models.binaryisotherm.BinaryLangmuir` model.
+Now, we can create a model with all of these points. We choose the :class:`.isotherm_models.binaryisotherm.BinaryLangmuir` model.
 
 >>> h2s_binary = BinaryLangmuir(
 ...     [f_i[i] for i in all_points],
@@ -95,8 +95,8 @@ dH_i : Size=1
     Key  : Value
     None : -20205.7398278234
 
->>> ch4_unary.M_i.display()
-M_i : Size=1
+>>> ch4_unary.q_mi.display()
+q_mi : Size=1
     Key  : Value
     None : 2.7226241284913613
 
@@ -128,10 +128,10 @@ H_i_star : Size=1, Index=None
 A_i : Size=1, Index=None
     Key  : Lower : Value              : Upper : Fixed : Stale : Domain
     None :  None : -7.365904878303015 :  None : False : False :  Reals
-M_i_star : Size=1, Index=None
+q_mi_star : Size=1, Index=None
     Key  : Lower : Value              : Upper : Fixed : Stale : Domain
     None :  None : 1.0109486926682547 :  None : False : False :  Reals
-M_i : Size=1
+q_mi : Size=1
     Key  : Value
     None : 3.1127110247255563
 k_i_inf : Size=1
@@ -146,12 +146,12 @@ One option is to initialize the binary variables from the Langmuir combining rul
 
 >>> h2s_binary.H_i_star = pyo.value(h2s_unary.H_i_star)
 >>> h2s_binary.A_i = pyo.value(h2s_unary.A_i)
->>> h2s_binary.M_i_star = pyo.value(h2s_unary.M_i_star)
+>>> h2s_binary.q_mi_star = pyo.value(h2s_unary.q_mi_star)
 >>> h2s_binary.A_j = pyo.value(ch4_unary.A_i)
 >>> h2s_binary.H_j_star = pyo.value(ch4_unary.H_i_star)
 >>> ch4_binary.H_i_star = pyo.value(ch4_unary.H_i_star)
 >>> ch4_binary.A_i = pyo.value(ch4_unary.A_i)
->>> ch4_binary.M_i_star = pyo.value(ch4_unary.M_i_star)
+>>> ch4_binary.q_mi_star = pyo.value(ch4_unary.q_mi_star)
 >>> ch4_binary.A_j = pyo.value(h2s_unary.A_i)
 >>> ch4_binary.H_j_star = pyo.value(h2s_unary.H_i_star)
 
@@ -175,9 +175,9 @@ It is of interest to compare the binary fit parameters to the unary parameters
 -11.073113
 >>> pyo.value(h2s_unary.H_i_star)
 -10.97606
->>> pyo.value(h2s_binary.M_i_star)
+>>> pyo.value(h2s_binary.q_mi_star)
 1.0189875
->>> pyo.value(h2s_unary.M_i_star)
+>>> pyo.value(h2s_unary.q_mi_star)
 1.0109486
 >>> pyo.value(h2s_binary.A_i)
 -7.32572

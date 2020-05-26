@@ -1,4 +1,4 @@
-from models.unaryisotherm import LangmuirUnary
+from isotherm_models.unaryisotherm import LangmuirUnary
 import pandas as pd
 
 

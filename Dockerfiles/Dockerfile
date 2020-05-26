@@ -1,3 +1,0 @@
-FROM dejac001/pyomoipopt
-
-RUN pip3 install chem-util matplotlib pandas numpy

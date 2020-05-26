@@ -16,6 +16,7 @@ Welcome to adsorption_isotherm_fitting's documentation!
    h2s_ch4
    unaryisotherm
    binaryisotherm
+   rast
    data_sets
 
 

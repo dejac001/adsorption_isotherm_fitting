@@ -1,0 +1,5 @@
+FROM dejac001/isotherm-fitting
+
+RUN cd /home/pyomo/shared/ \
+    && git clone https://github.com/dejac001/adsorption_isotherm_fitting.git \
+    && mv isotherm_models /usr/local/lib/python3.8/dist-packages/

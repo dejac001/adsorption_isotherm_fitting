@@ -12,7 +12,7 @@ We first load the necessary packages
 >>> import pyomo.environ as pyo
 >>> import matplotlib.pyplot as plt
 >>> import pandas as pd
->>> from models.unaryisotherm import LangmuirUnary
+>>> from isotherm_models.unaryisotherm import LangmuirUnary
 
 CO2
 ---
@@ -55,8 +55,8 @@ We then take a look at the results
 dH_i : Size=1
     Key  : Value
     None : -20780.90809523844
->>> co2_model.M_i.display()
-M_i : Size=1
+>>> co2_model.q_mi.display()
+q_mi : Size=1
     Key  : Value
     None : 8.95582798469325
 >>> co2_model.k_i_inf.display()
@@ -115,8 +115,8 @@ We then take a look at the results
 dH_i : Size=1
     Key  : Value
     None : -12557.526993112784
->>> n2_model.M_i.display()
-M_i : Size=1
+>>> n2_model.q_mi.display()
+q_mi : Size=1
     Key  : Value
     None : 0.45280441671269905
 >>> n2_model.k_i_inf.display()
