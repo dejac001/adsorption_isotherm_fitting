@@ -30,4 +30,9 @@ Example [here](https://adsorption-isotherm-fitting.readthedocs.io/en/latest/h2s_
 [PyGAPS](https://github.com/pauliacomi/pyGAPS)
 [PyIAST](https://github.com/CorySimon/pyIAST)
 
+Acknowledgement
+===============
+
+This material has been supported by the U.S. Department of Energy’s Office of Basic Energy Sciences, Division of Chemical
+Sciences, Geosciences and Biosciences under Award Number DE-FG02-17ER16362
 
