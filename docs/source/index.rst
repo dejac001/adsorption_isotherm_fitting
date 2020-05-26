@@ -14,8 +14,7 @@ Welcome to adsorption_isotherm_fitting's documentation!
    installation
    co2_n2
    h2s_ch4
-   unaryisotherm
-   binaryisotherm
+   isothermmodels
    rast
    data_sets
 

@@ -18,10 +18,10 @@ First, we import the necessary packages
 First, we grab the data for adsorption of H2S:
 
 >>> df = pd.read_csv('data_sets/CH4_H2S_MFI_binary_with_fugacity.csv')
->>> f_i, f_j, q_i, T = df['fugacity H2S [Pa]'], df['fugacity CH4 [Pa]'], df['Q H2S [mmol/g]'], df['T [K]']
+>>> hat_f_i, hat_f_j, q_i, T = df['fugacity H2S [Pa]'], df['fugacity CH4 [Pa]'], df['Q H2S [mmol/g]'], df['T [K]']
 
-Here, we are going to fit the loading of H2S, :code:`q_i`, as a function of the fugacities of H2S, :code:`f_i`,
-and CH4, :code:`f_j`.
+Here, we are going to fit the loading of H2S, :code:`q_i`, as a function of the (mixture)
+fugacities of H2S, :code:`hat_f_i`, and CH4, :code:`hat_f_j`.
 Since the data file includes both binary and unary data (including CH4 unary data where H2S is not present),
 we need to find the data points where H2S is present.
 We can do this with a list comprehension as below
@@ -31,8 +31,8 @@ We can do this with a list comprehension as below
 Now, we can create a model with all of these points. We choose the :class:`.isotherm_models.binaryisotherm.BinaryLangmuir` model.
 
 >>> h2s_binary = BinaryLangmuir(
-...     [f_i[i] for i in all_points],
-...     [f_j[i] for i in all_points],
+...     [hat_f_i[i] for i in all_points],
+...     [hat_f_j[i] for i in all_points],
 ...     [q_i[i] for i in all_points],
 ...     [T[i] for i in all_points],
 ...     name='H2S_binary'
@@ -42,12 +42,13 @@ Now, we can create a model with all of these points. We choose the :class:`.isot
 Similarly, we can find the indices of points where *only* H2S is present (i.e., the unary points for H2S),
 using the following code
 
->>> unary_points = [i for i in range(len(q_i)) if f_j[i] < 1e-12]
+>>> unary_points = [i for i in range(len(q_i)) if hat_f_j[i] < 1e-12]
+>>> f_i = [hat_f_i[i] for i in unary_points]
 
 And we can create a unary model as
 
 >>> h2s_unary = LangmuirUnary(
-...     [f_i[i] for i in unary_points],
+...     f_i,
 ...     [q_i[i] for i in unary_points],
 ...     [T[i] for i in unary_points],
 ...     name='H2S_unary'
@@ -56,18 +57,18 @@ And we can create a unary model as
 We can undertake a similar procedure for CH4, as below
 
 >>> df = pd.read_csv('data_sets/CH4_H2S_MFI_binary_with_fugacity.csv')
->>> p_i, p_j, q_i, T = df['fugacity CH4 [Pa]'], df['fugacity H2S [Pa]'], df['Q CH4 [mmol/g]'], df['T [K]']
+>>> hat_f_i, hat_f_j, q_i, T = df['fugacity CH4 [Pa]'], df['fugacity H2S [Pa]'], df['Q CH4 [mmol/g]'], df['T [K]']
 >>> all_points = [i for i in range(len(q_i)) if q_i[i] > 0.]
->>> unary_points = [i for i in range(len(q_i)) if p_j[i] < 1e-12]
->>> ch4_unary = LangmuirUnary(
-...     [p_i[i] for i in unary_points],
+>>> unary_points = [i for i in range(len(q_i)) if hat_f_j[i] < 1e-12]
+>>> f_i = [hat_f_i[i] for i in unary_points]
+>>> ch4_unary = LangmuirUnary(f_i,
 ...     [q_i[i] for i in unary_points],
 ...     [T[i] for i in unary_points],
 ...     name='CH4_unary'
 ... )
 >>> ch4_binary = BinaryLangmuir(
-...     [p_i[i] for i in all_points],
-...     [p_j[i] for i in all_points],
+...     [hat_f_i[i] for i in all_points],
+...     [hat_f_j[i] for i in all_points],
 ...     [q_i[i] for i in all_points],
 ...     [T[i] for i in all_points],
 ...     name='CH4_binary'

@@ -13,22 +13,28 @@ class UnaryIsotherm(pyo.ConcreteModel):
     :type q_i: list
     :param T: temperatures in [K], defaults to None
     :type T: list, optional
-    :param points: state points at which a pressure and temperature are provided
-    :type points: list, derived from input
-    :param q_calc: calculated loding at each state point
-    :type q_calc: pyo.Var, derived from input
-    :param objective: objective function to be minimized for isotherm fitting, calculated from :meth:`models.unaryisotherm.UnaryIsotherm.objective_rule`
-    :type objective: pyo.Objective, derived from input
     :param q_ref: reference loading, defaults to maximum loading in :attr:`q_i`
     :type q_ref: float, optional
-    :param f_ref: reference pressure, defaults to maximum pressure in :attr:`f_i`
+    :param f_ref: reference fugacity, defaults to maximum fugacity in :attr:`f_j`
     :type f_ref: float, optional
     :param T_ref: reference temperature, defaults to maximum temperature in :attr:`T`
     :type T_ref: float, optional
+    :param points: state points at which a pressure and temperature are provided
+    :type points: list, derived from input
+    :param f_i_star: dimensionless fugacitities, calculated by Equation :eq:`eq_fis_unary`
+    :type f_i_star: list, derived
+    :param theta: dimensionless loadings, calculated by Equation :eq:`eq_theta`
+    :type theta: list, derived
+    :param T_star: dimensionless temperatures, calculated by Equation :eq:`eq_Ts`
+    :type T_star: list, derived
+    :param theta_calc: calculated dimensionless at each state point
+    :type theta_calc: pyo.Var, derived from input
+    :param objective: objective function to be minimized for isotherm fitting, calculated from :meth:`isotherm_models.unaryisotherm.UnaryIsotherm.objective_rule`
+    :type objective: pyo.Objective, derived from input
+    :param R2: coefficient of determination, see :meth:`isotherm_models.unaryisotherm.UnaryIsotherm.R2_rule`
+    :type R2: pyo.Expression, derived
     :param q_calc: calculated loading in units
     :type q_calc: pyo.Expression, derived
-    :param R: gas constant, set to 8.314 J/mol/K [=] m**3*Pa/mol/K
-    :type R: float, hard-coded
     """
     def __init__(self, f_i, q_i, T, q_ref=None, f_ref=None, T_ref=None, **kwargs):
         """
@@ -40,14 +46,13 @@ class UnaryIsotherm(pyo.ConcreteModel):
         assert len(f_i) == len(q_i), 'Inconsistent input data'
         assert len(f_i) == len(T), 'Inconsistent number of temperatures'
 
-        self.R = R
-        self.points = pyo.Set(initialize=list(range(len(f_i))), ordered=True)
         self.f_i = f_i
         self.q_i = q_i
         self.T = T
         self.q_ref = q_ref
         self.f_ref = f_ref
         self.T_ref = T_ref
+        self.points = pyo.Set(initialize=list(range(len(f_i))), ordered=True)
 
         # override defaults
         if self.q_ref is None:
@@ -123,7 +128,7 @@ class UnaryIsotherm(pyo.ConcreteModel):
             fig = plt.figure()
         if ax is None:
             ax = fig.add_subplot(111)
-            ax.set_xlabel('f_i')
+            ax.set_xlabel('hat_f_j')
             ax.set_ylabel('q_i')
 
         vals = self.q_calc.extract_values()
@@ -138,7 +143,7 @@ class UnaryIsotherm(pyo.ConcreteModel):
             fig = plt.figure()
         if ax is None:
             ax = fig.add_subplot(111)
-            ax.set_xlabel('f_i')
+            ax.set_xlabel('hat_f_j')
             ax.set_ylabel('q_i')
 
         vals = self.theta_calc.extract_values()
@@ -215,7 +220,7 @@ class LangmuirUnary(UnaryIsotherm):
         # add expressions for dimensional quantities
         self.q_mi = pyo.Expression(expr=self.q_mi_star * self.q_ref)
         self.k_i_inf = pyo.Expression(expr=pyo.exp(self.A_i) / self.f_ref)
-        self.dH_i = pyo.Expression(expr=self.R*self.T_ref*self.H_i_star)
+        self.dH_i = pyo.Expression(expr=R*self.T_ref*self.H_i_star)
 
         self.isotherm_eq = pyo.Constraint(self.points, rule=LangmuirUnary.isotherm_eq_rule)
 
@@ -247,7 +252,7 @@ class LangmuirUnary(UnaryIsotherm):
 
     def isotherm_expression(self, point):
         """Isotherm expression in unit quantities, see Equation :eq:`eq_lang_unary`"""
-        K = self.k_i_inf*pyo.exp(-self.dH_i/self.R/self.T[point])*self.f_i[point]
+        K = self.k_i_inf*pyo.exp(-self.dH_i/R/self.T[point])*self.f_i[point]
         return self.q_mi * K / (1. + K)
 
     def dimensionless_isotherm_expression(self, point):
