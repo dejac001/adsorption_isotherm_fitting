@@ -28,7 +28,7 @@ We can do this with a list comprehension as below
 
 >>> all_points = [i for i in range(len(q_i)) if q_i[i] > 0.]
 
-Now, we can create a model with all of these points. We choose the :ref:`models.binaryisotherm.BinaryLangmuir` model.
+Now, we can create a model with all of these points. We choose the :class:`.models.binaryisotherm.BinaryLangmuir` model.
 
 >>> h2s_binary = BinaryLangmuir(
 ...     [f_i[i] for i in all_points],

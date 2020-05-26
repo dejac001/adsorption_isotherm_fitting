@@ -12,6 +12,7 @@ Welcome to adsorption_isotherm_fitting's documentation!
    :caption: Contents:
 
    installation
+   co2_n2
    h2s_ch4
    unaryisotherm
    binaryisotherm
