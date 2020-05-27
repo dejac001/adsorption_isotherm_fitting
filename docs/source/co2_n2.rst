@@ -47,7 +47,7 @@ and solve it
 
 We then take a look at the results
 
->>> co2_model.get_R2()
+>>> co2_model.get_R2_pyomo()
 0.99796
 >>> co2_model.get_objective()
 0.007229102
@@ -107,7 +107,7 @@ Solving it
 
 We then take a look at the results
 
->>> n2_model.get_R2()
+>>> n2_model.get_R2_pyomo()
 0.99262
 >>> n2_model.get_objective()
 0.00194249

@@ -84,7 +84,7 @@ We solve the ch4_unary model first
 
 and observe that the fit is quite good.
 
->>> ch4_unary.get_R2()
+>>> ch4_unary.get_R2_pyomo()
 0.9998
 >>> ch4_unary.get_objective()
 0.0007123352658190
@@ -109,7 +109,7 @@ k_i_inf : Size=1
 Then we can do the same thing with the H2S unary model
 
 >>> h2s_unary.solve()
->>> h2s_unary.get_R2()
+>>> h2s_unary.get_R2_pyomo()
 0.998700
 >>> h2s_unary.get_objective()
 0.0053414
@@ -160,11 +160,11 @@ And then solve them using the usual syntax
 
 >>> h2s_binary.solve()
 >>> ch4_binary.solve()
->>> h2s_binary.get_R2()
+>>> h2s_binary.get_R2_pyomo()
 0.9988281256
 >>> h2s_binary.get_objective()
 0.0186995038
->>> ch4_binary.get_R2()
+>>> ch4_binary.get_R2_pyomo()
 0.999329631
 >>> ch4_binary.get_objective()
 0.007515807
@@ -225,3 +225,7 @@ array([  1.01898639, -11.07321779,  -8.15011325,  -7.32582652,
 ...         [h2s_binary.q_mi_star, h2s_binary.H_i_star, h2s_binary.H_j_star, h2s_binary.A_i, h2s_binary.A_j])))
 array([-1.12501256e-06, -1.04698086e-04, -1.76342848e-04, -1.04982550e-04,
        -1.81042032e-04])
+>>> h2s_binary.get_R2_scipy()
+0.998828
+
+which is nearly the same as the pyomo/ipopt result.

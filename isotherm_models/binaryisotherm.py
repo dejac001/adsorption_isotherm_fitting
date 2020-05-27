@@ -30,7 +30,7 @@ class BinaryIsotherm(UnaryIsotherm):
     :type T_star: list, derived
     :param theta_calc: calculated dimensionless at each state point
     :type theta_calc: pyo.Var, derived from input
-    :param objective: objective function to be minimized for isotherm fitting, calculated from :meth:`isotherm_models.unaryisotherm.UnaryIsotherm.objective_rule`
+    :param objective: objective function to be minimized for isotherm fitting, calculated from :meth:`isotherm_models.unaryisotherm.UnaryIsotherm.objective_rule_pyomo`
     :type objective: pyo.Objective, derived from input
     :param R2: coefficient of determination, see :meth:`isotherm_models.unaryisotherm.UnaryIsotherm.R2_rule`
     :type R2: pyo.Expression, derived

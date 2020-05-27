@@ -71,7 +71,7 @@ class UnaryIsotherm(pyo.ConcreteModel):
     :type T_star: list, derived
     :param theta_calc: calculated dimensionless at each state point
     :type theta_calc: pyo.Var, derived from input
-    :param objective: objective function to be minimized for isotherm fitting, calculated from :meth:`isotherm_models.unaryisotherm.UnaryIsotherm.objective_rule`
+    :param objective: objective function to be minimized for isotherm fitting, calculated from :meth:`isotherm_models.unaryisotherm.UnaryIsotherm.objective_rule_pyomo`
     :type objective: pyo.Objective, derived from input
     :param R2: coefficient of determination, see :meth:`isotherm_models.unaryisotherm.UnaryIsotherm.R2_rule`
     :type R2: pyo.Expression, derived
@@ -114,7 +114,7 @@ class UnaryIsotherm(pyo.ConcreteModel):
 
         self.q_calc = pyo.Expression(self.points, rule=UnaryIsotherm.q_calc_expr)
         self.R2 = pyo.Expression(expr=self.R2_rule())
-        self.objective = pyo.Objective(expr=self.objective_rule(), sense=pyo.minimize)
+        self.objective = pyo.Objective(expr=self.objective_rule_pyomo(), sense=pyo.minimize)
         self.has_isotherm_variables = False
 
     def isotherm_eq_rule(self, point):
@@ -136,16 +136,28 @@ class UnaryIsotherm(pyo.ConcreteModel):
         # q_mean = pyo.summation(self.theta) / len(self.points)
         q_mean = sum(self.theta[i] for i in self.points) / len(self.points)
         ss_tot = sum((self.theta[i] - q_mean) * (self.theta[i] - q_mean) for i in self.points)
-        ss_res = self.objective_rule()
+        ss_res = self.objective_rule_pyomo()
         return 1 - ss_res / ss_tot
 
-    def get_R2(self):
-        return pyo.value(self.R2)
+    def get_R2_scipy(self):
+        q_mean = sum(self.theta[i] for i in self.points) / len(self.points)
+        ss_tot = sum((self.theta[i] - q_mean) * (self.theta[i] - q_mean) for i in self.points)
+        ss_res = self.objective_rule_scipy()
+        return 1 - ss_res / ss_tot
+
+    def get_R2_pyomo(self):
+        return pyo.value(self.R2_rule())
 
     def get_objective(self):
         return pyo.value(self.objective)
 
-    def objective_rule(self):
+    def objective_rule(self, indices, y_true, y_calc):
+        return sum(
+            (y_true[i]-y_calc[i])*(y_true[i]-y_calc[i])
+            for i in indices
+        )
+
+    def objective_rule_pyomo(self):
         r"""Sum of squared errors between calculated loading and predicted loading
 
         .. math::
@@ -155,19 +167,23 @@ class UnaryIsotherm(pyo.ConcreteModel):
         and *calc* denotes the data calculated from the isotherm function
 
         """
-        return sum(
-            (self.theta[i] - self.theta_calc[i]) * (self.theta[i] - self.theta_calc[i]) for i in self.points
-        )
+        return self.objective_rule(self.points, self.theta, self.theta_calc)
+
+    def objective_rule_scipy(self):
+        theta_calc = self.eval_dimensionless(np.array(self.x_data_dimensionless), *self.popt)
+        theta = np.array(self.theta)
+        return np.sum((theta-theta_calc)*(theta-theta_calc))
 
     def solve_scipy(self, loss='soft_l1', max_nfev=5000, bounds=None, **kwargs):
         if bounds is None:
             bounds = (-500, 500)
 
-        return curve_fit(
+        self.popt, self.pcov = curve_fit(
             self.eval_dimensionless, self.x_data_dimensionless, self.theta,
             p0=self.initial_guess_vector(),
             loss=loss, max_nfev=max_nfev, bounds=bounds, **kwargs
         )
+        return self.popt, self.pcov
 
     def initial_guess_vector(self):
         raise NotImplementedError

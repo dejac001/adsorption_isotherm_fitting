@@ -13,7 +13,7 @@ def test_H2S_MFI():
     T = [T[i] for i in points]
     model = BinaryLangmuir(p_i, p_j, q_i, T)
     model.solve()
-    assert model.get_R2() > 0.99, 'R2 not above 0.99'
+    assert model.get_R2_pyomo() > 0.99, 'R2 not above 0.99'
     assert model.get_objective() < 0.02, 'Objective function not below 0.02'
 
 
@@ -28,5 +28,5 @@ def test_CH4_MFI():
     T = [T[i] for i in points]
     model = BinaryLangmuir(p_i, p_j, q_i, T)
     model.solve()
-    assert model.get_R2() > 0.99, 'R2 not above 0.99'
+    assert model.get_R2_pyomo() > 0.99, 'R2 not above 0.99'
     assert model.get_objective() < 0.01, 'Objective function not below 0.01'
