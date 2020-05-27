@@ -212,3 +212,16 @@ We get the same answer whether we use units or dimensional quantities
 ... )
 0.0
 
+
+Comparison to scipy
+-------------------
+
+>>> import numpy as np
+>>> popt, pcov = h2s_binary.solve_scipy()
+>>> popt
+array([  1.01898639, -11.07321779,  -8.15011325,  -7.32582652,
+        -7.11673647])
+>>> popt - np.array(list(map(pyo.value,
+...         [h2s_binary.q_mi_star, h2s_binary.H_i_star, h2s_binary.H_j_star, h2s_binary.A_i, h2s_binary.A_j])))
+array([-1.12501256e-06, -1.04698086e-04, -1.76342848e-04, -1.04982550e-04,
+       -1.81042032e-04])

@@ -134,3 +134,14 @@ And save the results to a file
 which looks like
 
 .. image:: N2_example.png
+
+
+Comparison to scipy
+-------------------
+
+>>> import numpy as np
+>>> popt, pcov = co2_model.solve_scipy()
+>>> popt
+array([  3.71939309, -10.14817759,  -7.28715595])
+>>> popt - np.array(list(map(pyo.value, [co2_model.q_mi_star, co2_model.A_i, co2_model.H_i_star])))
+array([3.28355311e-05, 3.67969745e-05, 3.88858220e-05])

@@ -1,5 +1,7 @@
 import pyomo.environ as pyo
 import matplotlib.pyplot as plt
+from scipy.optimize import curve_fit
+import numpy as np
 from isotherm_models import solver as default_solver
 from chem_util.chem_constants import gas_constant as R
 
@@ -16,7 +18,12 @@ def K_expr(k_inf, dH, T, f):
     :param f:
     :return:
     """
-    return k_inf * pyo.exp(dH / -R / T) * f
+    if isinstance(T, np.ndarray):
+        my_exp = np.exp
+    else:
+        my_exp = pyo.exp
+
+    return k_inf * my_exp(dH / -R / T) * f
 
 
 def K_star_expr(A, H_star, T_star, f_star):
@@ -31,7 +38,12 @@ def K_star_expr(A, H_star, T_star, f_star):
     :param f_star:
     :return:
     """
-    return pyo.exp(A - H_star/T_star) * f_star
+    if isinstance(T_star, np.ndarray):
+        my_exp = np.exp
+    else:
+        my_exp = pyo.exp
+
+    return my_exp(A - H_star/T_star) * f_star
 
 
 class UnaryIsotherm(pyo.ConcreteModel):
@@ -148,13 +160,13 @@ class UnaryIsotherm(pyo.ConcreteModel):
         )
 
     def solve_scipy(self, loss='soft_l1', max_nfev=5000, bounds=None, **kwargs):
-        from scipy.optimize import curve_fit
         if bounds is None:
             bounds = (-500, 500)
+
         return curve_fit(
             self.eval_dimensionless, self.x_data_dimensionless, self.theta,
             p0=self.initial_guess_vector(),
-            loss=loss, max_nfev=max_nfev, bounds=bounds
+            loss=loss, max_nfev=max_nfev, bounds=bounds, **kwargs
         )
 
     def initial_guess_vector(self):
@@ -332,13 +344,19 @@ class LangmuirUnary(UnaryIsotherm):
             f_i, T, self.q_mi, self.k_i_inf, self.dH_i
         )
 
-    def eval_dimensionless(self, f_i_star, T_star, q_mi_star, A_i, H_i_star):
+    def eval_dimensionless(self, x, q_mi_star, A_i, H_i_star):
+        if isinstance(x, tuple):
+            f_i_star, T_star = x
+        elif isinstance(x, np.ndarray):
+            f_i_star, T_star = x[:, 0], x[:, 1]
+        else:
+            raise Exception('Type not caught for x={} type(x)={}'.format(x, type(x)))
         K = K_star_expr(A=A_i, H_star=H_i_star, T_star=T_star, f_star=f_i_star)
         return q_mi_star * K / (1. + K)
 
     def eval_dimensionless_pyomo(self, f_i_star, T_star):
         return self.eval_dimensionless(
-            f_i_star, T_star, self.q_mi_star, self.A_i, self.H_i_star
+            (f_i_star, T_star), self.q_mi_star, self.A_i, self.H_i_star
         )
 
     def isotherm_expression(self, point):

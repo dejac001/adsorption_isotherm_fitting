@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import pyomo.environ as pyo
+import numpy as np
 from isotherm_models.unaryisotherm import UnaryIsotherm, LangmuirUnary, K_expr, K_star_expr
 from chem_util.chem_constants import gas_constant as R
 
@@ -149,14 +150,20 @@ class BinaryLangmuir(BinaryIsotherm, LangmuirUnary):
             self.initial_guess_A_i(),
         ]
 
-    def eval(self, hat_f_i, hat_f_j, T, q_mi, dH_i, dH_j, k_i_inf, k_j_inf):
+    def eval(self, x, q_mi, dH_i, dH_j, k_i_inf, k_j_inf):
+        if isinstance(x, tuple):
+            hat_f_i, hat_f_j, T = x
+        elif isinstance(x, np.ndarray):
+            hat_f_i, hat_f_j, T = x[:, 0], x[:, 1], x[:, 2]
+        else:
+            raise Exception('Type not caught for x={} type(x)={}'.format(x, type(x)))
         K_i = K_expr(k_inf=k_i_inf, dH=dH_i, T=T, f=hat_f_i)
         K_j = K_expr(k_inf=k_j_inf, dH=dH_j, T=T, f=hat_f_j)
         return q_mi * K_i / (1. + K_i + K_j)
 
     def eval_pyomo(self, hat_f_i, hat_f_j, T):
         """Evaluate isotherm in dimensional form"""
-        return self.eval(hat_f_i, hat_f_j, T, self.q_mi, self.dH_i, self.dH_j, self.k_i_inf, self.k_j_inf)
+        return self.eval((hat_f_i, hat_f_j, T), self.q_mi, self.dH_i, self.dH_j, self.k_i_inf, self.k_j_inf)
 
     def isotherm_expression(self, point):
         """Isotherm expression in unit quantities, see Equation :eq:`eq_lang_binary`"""
@@ -165,18 +172,24 @@ class BinaryLangmuir(BinaryIsotherm, LangmuirUnary):
 
         return self.eval_pyomo(self.hat_f_i[point], self.hat_f_j[point], self.T[point])
 
-    def eval_dimensionless(self, hat_f_i_star, hat_f_j_star, T_star, q_mi_star, H_i_star, H_j_star, A_i, A_j):
+    def eval_dimensionless(self, x, q_mi_star, H_i_star, H_j_star, A_i, A_j):
+        if isinstance(x, tuple):
+            hat_f_i_star, hat_f_j_star, T_star = x
+        elif isinstance(x, np.ndarray):
+            hat_f_i_star, hat_f_j_star, T_star = x[:, 0], x[:, 1], x[:, 2]
+        else:
+            raise Exception('Type not caught for x={} type(x)={}'.format(x, type(x)))
         K_i = K_star_expr(
-            A=self.A_i, H_star=H_i_star, T_star=T_star, f_star=hat_f_i_star,
+            A=A_i, H_star=H_i_star, T_star=T_star, f_star=hat_f_i_star,
         )
         K_j = K_star_expr(
-            A=self.A_j, H_star=H_j_star, T_star=T_star, f_star=hat_f_j_star
+            A=A_j, H_star=H_j_star, T_star=T_star, f_star=hat_f_j_star
         )
         return q_mi_star * K_i / (1. + K_i + K_j)
 
     def eval_dimensionless_pyomo(self, hat_f_i_star, hat_f_j_star, T_star):
         return self.eval_dimensionless(
-            hat_f_i_star, hat_f_j_star, T_star, self.q_mi_star, self.H_i_star, self.H_j_star, self.A_i, self.A_j
+            (hat_f_i_star, hat_f_j_star, T_star), self.q_mi_star, self.H_i_star, self.H_j_star, self.A_i, self.A_j
         )
 
     def dimensionless_isotherm_expression(self, point):
