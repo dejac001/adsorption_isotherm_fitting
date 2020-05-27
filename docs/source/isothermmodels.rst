@@ -122,7 +122,7 @@ include
 :math:`q_{\text{m},j}^\star`,
 and
 :math:`A_j`.
-The former three (math:`H_i^\star`,
+The former three (:math:`H_i^\star`,
 :math:`q_{\text{m},i}^\star`,
 and :math:`A_i`) have the same
 expression as the unary case,

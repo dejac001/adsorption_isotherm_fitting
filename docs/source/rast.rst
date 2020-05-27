@@ -33,3 +33,16 @@ Substituting Equations :eq:`mu` and :eq:`A` into Equation :eq:`gibbs_iso` yields
 .. math::
     \frac{A}{RT} \mathrm{d}\Pi = \sum_i q_i \mathrm{d} \ln{\hat{f}_i^\text{g}}
     :label: fugacity_iso
+
+If we have a good description of the multicomponent isotherms,
+
+.. math::
+    q_i = F(\{\hat{f}_k\})
+
+where :math:`F` is an isotherm function,
+Equation :eq:`fugacity_iso` can be simplified to
+
+.. math::
+    \frac{A\Pi}{RT} = \sum_i \int_0^{\hat{f}_i^\text{g}}\frac{q_i}{f_i^\prime}\mathrm{d}f_i^\prime
+
+where :math:`f_i^\prime` is a dummy variable for integration.

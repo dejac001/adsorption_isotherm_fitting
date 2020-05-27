@@ -15,8 +15,10 @@ Welcome to adsorption_isotherm_fitting's documentation!
    co2_n2
    h2s_ch4
    isothermmodels
+   rules
    rast
    data_sets
+   zreferences
 
 
 Indices and tables

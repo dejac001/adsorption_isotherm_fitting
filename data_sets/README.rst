@@ -46,4 +46,3 @@ The :math:`k_ij` parameter was set to 0.
     :file: CH4_H2S_MFI_binary_with_fugacity.csv
 
 
-.. bibliography:: ../source/references.bib

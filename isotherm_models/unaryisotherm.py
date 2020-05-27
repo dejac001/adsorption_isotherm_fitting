@@ -4,6 +4,51 @@ from isotherm_models import solver as default_solver
 from chem_util.chem_constants import gas_constant as R
 
 
+def K_expr(k_inf, dH, T, f, n=None):
+    r"""
+
+    .. math::
+        k_\infty \exp{\left(\frac{-\Delta H}{RT}\right)}f
+
+    .. math::
+        k_\infty T^n \exp{\left(\frac{-\Delta H}{RT}\right)}f
+
+    :param k_inf:
+    :param dH:
+    :param T:
+    :param f:
+    :param n:
+    :return:
+    """
+    if n is None:
+        return k_inf * pyo.exp(-dH / R / T) * f
+
+    return k_inf * T ** n * pyo.exp(-dH / R / T) * f
+
+
+def K_star_expr(A, H_star, T_star, f_star, T_ref=None, n=None):
+    r"""
+
+    .. math::
+        \exp{\left(A - H^\star/T^\star\right)}f^\star
+
+    .. math::
+        \exp{\left(A - H^\star/T^\star + n \log{T_\text{ref}} + n \log{T^\star} \right)}f^\star
+
+    :param A:
+    :param H_star:
+    :param T_star:
+    :param f_star:
+    :param T_ref:
+    :param n:
+    :return:
+    """
+    if n is None:
+        return pyo.exp(A - H_star/T_star) * f_star
+
+    return pyo.exp(A - H_star/T_star + n * pyo.log(T_ref) + n * pyo.log(T_star)) * f_star
+
+
 class UnaryIsotherm(pyo.ConcreteModel):
     r"""Base class for Unary Isotherms
 
@@ -36,7 +81,8 @@ class UnaryIsotherm(pyo.ConcreteModel):
     :param q_calc: calculated loading in units
     :type q_calc: pyo.Expression, derived
     """
-    def __init__(self, f_i, q_i, T, q_ref=None, f_ref=None, T_ref=None, **kwargs):
+
+    def __init__(self, f_i, q_i, T, q_ref=None, f_ref=None, T_ref=None, arrhenius_form='default', **kwargs):
         """
 
         :param kwargs: passed to :code:`pyo.ConcreteModel`
@@ -61,16 +107,18 @@ class UnaryIsotherm(pyo.ConcreteModel):
             self.f_ref = float(max(f_i))
         if self.T_ref is None:
             self.T_ref = float(max(T))
+        self.arrhenius_form = arrhenius_form
 
         self.f_i_star = [i / self.f_ref for i in self.f_i]
-        self.theta = [i/self.q_ref for i in self.q_i]
-        self.T_star = [i/self.T_ref for i in self.T]
+        self.theta = [i / self.q_ref for i in self.q_i]
+        self.T_star = [i / self.T_ref for i in self.T]
 
         self.theta_calc = pyo.Var(self.points, initialize=1., bounds=(0., None))
 
         self.q_calc = pyo.Expression(self.points, rule=UnaryIsotherm.q_calc_expr)
         self.R2 = pyo.Expression(expr=self.R2_rule())
         self.objective = pyo.Objective(expr=self.objective_rule(), sense=pyo.minimize)
+        self.has_isotherm_variables = False
 
     def isotherm_eq_rule(self, point):
         """Constraint for dimensionless expression"""
@@ -81,7 +129,7 @@ class UnaryIsotherm(pyo.ConcreteModel):
         self.objective.display(**kwargs)
 
     def q_calc_expr(self, point):
-        return self.theta_calc[point]*self.q_ref
+        return self.theta_calc[point] * self.q_ref
 
     def dimensionless_isotherm_expression(self, point):
         raise NotImplementedError
@@ -90,9 +138,9 @@ class UnaryIsotherm(pyo.ConcreteModel):
         """Calculate coefficient of determination squared, :math:`R^2` """
         # q_mean = pyo.summation(self.theta) / len(self.points)
         q_mean = sum(self.theta[i] for i in self.points) / len(self.points)
-        ss_tot = sum((self.theta[i] - q_mean)*(self.theta[i] - q_mean) for i in self.points)
+        ss_tot = sum((self.theta[i] - q_mean) * (self.theta[i] - q_mean) for i in self.points)
         ss_res = self.objective_rule()
-        return 1 - ss_res/ss_tot
+        return 1 - ss_res / ss_tot
 
     def get_R2(self):
         return pyo.value(self.R2)
@@ -111,7 +159,7 @@ class UnaryIsotherm(pyo.ConcreteModel):
 
         """
         return sum(
-            (self.theta[i]-self.theta_calc[i])*(self.theta[i]-self.theta_calc[i]) for i in self.points
+            (self.theta[i] - self.theta_calc[i]) * (self.theta[i] - self.theta_calc[i]) for i in self.points
         )
 
     def solve(self, solver=default_solver, **kwargs):
@@ -121,6 +169,10 @@ class UnaryIsotherm(pyo.ConcreteModel):
         :type solver: pyo.SolverFactory, optional
         :param kwargs: for solve argument
         """
+        if not self.has_isotherm_variables:
+            raise Exception('Need to add isotherm variables before solving; '
+                            'otherwise will get perfect fit with no params')
+
         solver.solve(self, **kwargs)
 
     def plot_unary(self, ax=None, fig=None):
@@ -209,6 +261,7 @@ class LangmuirUnary(UnaryIsotherm):
     :param dH_i: heat of adsorption of component *i*
     :type dH_i: pyo.Expression
     """
+
     def __init__(self, *args, **kwargs):
         UnaryIsotherm.__init__(self, *args, **kwargs)
 
@@ -216,13 +269,19 @@ class LangmuirUnary(UnaryIsotherm):
         self.H_i_star = pyo.Var(initialize=self.initial_guess_H_i_star())
         self.A_i = pyo.Var(initialize=self.initial_guess_A_i())
         self.q_mi_star = pyo.Var(initialize=self.initial_guess_M_i_star())
+        if self.arrhenius_form == 'modified':
+            self.n_i = pyo.Var(initialize=0., bounds=(-10., 10.))
+        else:
+            assert self.arrhenius_form == 'default', 'Arrhenius form {} not found!'.format(self.arrhenius_form)
+            self.n_i = None
 
         # add expressions for dimensional quantities
         self.q_mi = pyo.Expression(expr=self.q_mi_star * self.q_ref)
         self.k_i_inf = pyo.Expression(expr=pyo.exp(self.A_i) / self.f_ref)
-        self.dH_i = pyo.Expression(expr=R*self.T_ref*self.H_i_star)
+        self.dH_i = pyo.Expression(expr=R * self.T_ref * self.H_i_star)
 
         self.isotherm_eq = pyo.Constraint(self.points, rule=LangmuirUnary.isotherm_eq_rule)
+        self.has_isotherm_variables = True
 
     def initial_guess_H_i_star(self):
         r"""Initial guess for :math:`H_i^\star` variable
@@ -250,15 +309,22 @@ class LangmuirUnary(UnaryIsotherm):
         """
         return 1.
 
+    def eval(self, f_i, T):
+        K = K_expr(self.k_i_inf, self.dH_i, T, f_i, n=self.n_i)
+        return self.q_mi * K / (1. + K)
+
+    def eval_dimensionless(self, f_i_star, T_star):
+        K = K_star_expr(A=self.A_i, H_star=self.H_i_star, T_star=T_star,
+                          f_star=f_i_star, T_ref=self.T_ref, n=self.n_i)
+        return self.q_mi_star * K / (1. + K)
+
     def isotherm_expression(self, point):
         """Isotherm expression in unit quantities, see Equation :eq:`eq_lang_unary`"""
-        K = self.k_i_inf*pyo.exp(-self.dH_i/R/self.T[point])*self.f_i[point]
-        return self.q_mi * K / (1. + K)
+        return self.eval(self.f_i[point], self.T[point])
 
     def dimensionless_isotherm_expression(self, point):
         """Dimensionless isotherm expression, see Equation :eq:`eq_lang_unary_dimensionless`"""
-        K = pyo.exp(self.A_i - self.H_i_star / self.T_star[point]) * self.f_i_star[point]
-        return self.q_mi_star * K / (1. + K)
+        return self.eval_dimensionless(self.f_i_star[point], self.T_star[point])
 
     def display_results(self, **kwargs):
         super().display_results(**kwargs)

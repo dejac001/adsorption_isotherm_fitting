@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import pyomo.environ as pyo
-from isotherm_models.unaryisotherm import UnaryIsotherm, LangmuirUnary
+from isotherm_models.unaryisotherm import UnaryIsotherm, LangmuirUnary, K_expr, K_star_expr
 from chem_util.chem_constants import gas_constant as R
 
 
@@ -52,6 +52,7 @@ class BinaryIsotherm(UnaryIsotherm):
         self.hat_f_j_star = [i / self.f_ref for i in self.hat_f_j]
 
         self.unary_points = [i for i in self.points if self.hat_f_j[i] < 1e-12]
+        self.has_isotherm_variables = False
 
     def plot_adsorption_surface(self):
         """plot surface of adsorption data
@@ -117,9 +118,16 @@ class BinaryLangmuir(BinaryIsotherm, LangmuirUnary):
         # add variables
         self.H_i_star = pyo.Var(initialize=self.initial_guess_H_i_star())
         self.A_i = pyo.Var(initialize=self.initial_guess_A_i())
+        self.q_mi_star = pyo.Var(initialize=self.initial_guess_M_i_star(), bounds=(0., None))
+        if self.arrhenius_form == 'modified':
+            self.n_i = pyo.Var(initialize=0., bounds=(-10., 10.))
+            self.n_j = pyo.Var(initialize=0., bounds=(-10., 10.))
+        else:
+            assert self.arrhenius_form == 'default', 'Arrhenius form {} not found!'.format(self.arrhenius_form)
+            self.n_i = None
+            self.n_j = None
         self.H_j_star = pyo.Var(initialize=self.initial_guess_H_i_star())
         self.A_j = pyo.Var(initialize=self.initial_guess_A_i())
-        self.q_mi_star = pyo.Var(initialize=self.initial_guess_M_i_star(), bounds=(0., None))
 
         # add expressions for dimensional quantities
         self.q_mi = pyo.Expression(expr=self.q_mi_star * self.q_ref)
@@ -129,24 +137,34 @@ class BinaryLangmuir(BinaryIsotherm, LangmuirUnary):
         self.dH_j = pyo.Expression(expr=R*self.T_ref*self.H_j_star)
 
         self.isotherm_eq = pyo.Constraint(self.points, rule=BinaryLangmuir.isotherm_eq_rule)
+        self.has_isotherm_variables = True
+
+    def eval(self, hat_f_i, hat_f_j, T):
+        """Evaluate isotherm in dimensional form"""
+        K_i = K_expr(k_inf=self.k_i_inf, dH=self.dH_i, T=T, f=hat_f_i, n=self.n_i)
+        K_j = K_expr(k_inf=self.k_j_inf, dH=self.dH_j, T=T, f=hat_f_j, n=self.n_j)
+        return self.q_mi * K_i / (1. + K_i + K_j)
 
     def isotherm_expression(self, point):
         """Isotherm expression in unit quantities, see Equation :eq:`eq_lang_binary`"""
-        H_i = self.k_i_inf*pyo.exp(-self.dH_i/R/self.T[point])*self.hat_f_i[point]
         if point in self.unary_points:
-            return self.q_mi * H_i / (1. + H_i)
+            return self.eval(self.hat_f_i[point], 0, self.T[point])
 
-        H_j = self.k_j_inf*pyo.exp(-self.dH_j/R/self.T[point])*self.hat_f_j[point]
-        return self.q_mi * H_i / (1. + H_i + H_j)
+        return self.eval(self.hat_f_i[point], self.hat_f_j[point], self.T[point])
+
+    def eval_dimensionless(self, hat_f_i_star, hat_f_j_star, T_star):
+        K_i = K_star_expr(A=self.A_i, H_star=self.H_i_star, T_star=T_star,
+                          f_star=hat_f_i_star, T_ref=self.T_ref, n=self.n_i)
+        K_j = K_star_expr(A=self.A_j, H_star=self.H_j_star, T_star=T_star,
+                          f_star=hat_f_j_star, T_ref=self.T_ref, n=self.n_j)
+        return self.q_mi_star * K_i / (1. + K_i + K_j)
 
     def dimensionless_isotherm_expression(self, point):
         """Dimensionless isotherm expression, see Equation :eq:`eq_lang_binary_dimensionless`"""
-        K_i = pyo.exp(self.A_i - self.H_i_star / self.T_star[point]) * self.hat_f_i_star[point]
         if point in self.unary_points:
-            return self.q_mi_star * K_i / (1. + K_i)
+            return self.eval_dimensionless(self.hat_f_i_star[point], 0, self.T_star[point])
 
-        K_j = pyo.exp(self.A_j - self.H_j_star / self.T_star[point]) * self.hat_f_j_star[point]
-        return self.q_mi_star * K_i / (1. + K_i + K_j)
+        return self.eval_dimensionless(self.hat_f_i_star[point], self.hat_f_j_star[point], self.T_star[point])
 
     def display_results(self, **kwargs):
         super().display_results(**kwargs)

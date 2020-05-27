@@ -199,3 +199,40 @@ Which looks like
 
 .. image:: h2s_ch4_example.png
 
+Having fit the isotherms, we can now evaluate them at arbitrary fugacities and temperatures.
+We get the same answer whether we use units or dimensional quantities
+
+>>> pyo.value(h2s_unary.eval(h2s_unary.f_ref, h2s_unary.T_ref) - h2s_unary.q_ref*h2s_unary.eval_dimensionless(1., 1.))
+0.0
+
+
+>>> pyo.value(
+... h2s_binary.eval(h2s_binary.f_ref, h2s_binary.f_ref, h2s_binary.T_ref)
+... - h2s_binary.q_ref*h2s_binary.eval_dimensionless(1., 1., 1.)
+... )
+0.0
+
+In the case that the temperature-dependence does not fit well, we can try the
+modified arrhenius form, as in the following
+
+
+>>> h2s_binary_mod = BinaryLangmuir(
+...     [hat_f_i[i] for i in all_points],
+...     [hat_f_j[i] for i in all_points],
+...     [q_i[i] for i in all_points],
+...     [T[i] for i in all_points],
+...     name='H2S_binary',
+...     arrhenius_form='modified'
+... )
+>>> h2s_binary_mod.solve()
+>>> h2s_binary_mod.n_i.display()
+n_i : Size=1, Index=None
+    Key  : Lower : Value                 : Upper : Fixed : Stale : Domain
+    None : -10.0 : 1.519604015870839e-07 :  10.0 : False : False :  Reals
+>>> h2s_binary_mod.n_j.display()
+n_j : Size=1, Index=None
+    Key  : Lower : Value                 : Upper : Fixed : Stale : Domain
+    None : -10.0 : -5.809932220423433e-07 :  10.0 : False : False :  Reals
+
+In this case, we notice that the additional parameters are very close to zero,
+which is expected because we know that the normal arrhenius form has already fit well.
