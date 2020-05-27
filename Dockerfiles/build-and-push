@@ -6,6 +6,6 @@ docker build -t dejac001/pyomoipopt -f Dockerfiles/Dockerfile.pyomoipopt . && do
 
 docker build -t dejac001/isotherm-fitting -f Dockerfiles/Dockerfile.dev . && docker push dejac001/isotherm-fitting
 
-docker build -t dejac001/isotherm-fitting-users:0.0.3 -f Dockerfiles/Dockerfile.users . && docker push dejac001/isotherm-fitting-users:0.0.3
+docker build -t dejac001/isotherm-fitting-users:0.0.4 -f Dockerfiles/Dockerfile.users . && docker push dejac001/isotherm-fitting-users:0.0.4
 
 docker build -t dejac001/isotherm-fitting-tests -f Dockerfiles/Dockerfile.tests . && docker push dejac001/isotherm-fitting-tests

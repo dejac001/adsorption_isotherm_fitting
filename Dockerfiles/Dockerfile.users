@@ -1,6 +1,6 @@
 FROM dejac001/isotherm-fitting
 
 RUN cd /home/pyomo/shared/ \
-    && wget https://github.com/dejac001/adsorption_isotherm_fitting/archive/v0.0.3.tar.gz \
-    && tar xvzf v0.0.3.tar.gz \
-    && mv /home/pyomo/shared/adsorption_isotherm_fitting-0.0.3/isotherm_models/ /usr/local/lib/python3.8/dist-packages/
+    && wget https://github.com/dejac001/adsorption_isotherm_fitting/archive/v0.0.4.tar.gz \
+    && tar xvzf v0.0.4.tar.gz \
+    && mv /home/pyomo/shared/adsorption_isotherm_fitting-0.0.4/isotherm_models/ /usr/local/lib/python3.8/dist-packages/
