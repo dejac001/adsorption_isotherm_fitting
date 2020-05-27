@@ -231,7 +231,7 @@ n_i : Size=1, Index=None
     None : -10.0 : 1.519604015870839e-07 :  10.0 : False : False :  Reals
 >>> h2s_binary_mod.n_j.display()
 n_j : Size=1, Index=None
-    Key  : Lower : Value                 : Upper : Fixed : Stale : Domain
+    Key  : Lower : Value                  : Upper : Fixed : Stale : Domain
     None : -10.0 : -5.809932220423433e-07 :  10.0 : False : False :  Reals
 
 In this case, we notice that the additional parameters are very close to zero,
