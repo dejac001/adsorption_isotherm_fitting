@@ -4,49 +4,34 @@ from isotherm_models import solver as default_solver
 from chem_util.chem_constants import gas_constant as R
 
 
-def K_expr(k_inf, dH, T, f, n=None):
+def K_expr(k_inf, dH, T, f):
     r"""
 
     .. math::
         k_\infty \exp{\left(\frac{-\Delta H}{RT}\right)}f
 
-    .. math::
-        k_\infty T^n \exp{\left(\frac{-\Delta H}{RT}\right)}f
-
     :param k_inf:
     :param dH:
     :param T:
     :param f:
-    :param n:
     :return:
     """
-    if n is None:
-        return k_inf * pyo.exp(-dH / R / T) * f
-
-    return k_inf * T ** n * pyo.exp(-dH / R / T) * f
+    return k_inf * pyo.exp(dH / -R / T) * f
 
 
-def K_star_expr(A, H_star, T_star, f_star, T_ref=None, n=None):
+def K_star_expr(A, H_star, T_star, f_star):
     r"""
 
     .. math::
         \exp{\left(A - H^\star/T^\star\right)}f^\star
 
-    .. math::
-        \exp{\left(A - H^\star/T^\star + n \log{T_\text{ref}} + n \log{T^\star} \right)}f^\star
-
     :param A:
     :param H_star:
     :param T_star:
     :param f_star:
-    :param T_ref:
-    :param n:
     :return:
     """
-    if n is None:
-        return pyo.exp(A - H_star/T_star) * f_star
-
-    return pyo.exp(A - H_star/T_star + n * pyo.log(T_ref) + n * pyo.log(T_star)) * f_star
+    return pyo.exp(A - H_star/T_star) * f_star
 
 
 class UnaryIsotherm(pyo.ConcreteModel):
@@ -82,7 +67,7 @@ class UnaryIsotherm(pyo.ConcreteModel):
     :type q_calc: pyo.Expression, derived
     """
 
-    def __init__(self, f_i, q_i, T, q_ref=None, f_ref=None, T_ref=None, arrhenius_form='default', **kwargs):
+    def __init__(self, f_i, q_i, T, q_ref=None, f_ref=None, T_ref=None, **kwargs):
         """
 
         :param kwargs: passed to :code:`pyo.ConcreteModel`
@@ -107,13 +92,13 @@ class UnaryIsotherm(pyo.ConcreteModel):
             self.f_ref = float(max(f_i))
         if self.T_ref is None:
             self.T_ref = float(max(T))
-        self.arrhenius_form = arrhenius_form
 
         self.f_i_star = [i / self.f_ref for i in self.f_i]
         self.theta = [i / self.q_ref for i in self.q_i]
         self.T_star = [i / self.T_ref for i in self.T]
 
         self.theta_calc = pyo.Var(self.points, initialize=1., bounds=(0., None))
+        self.x_data_dimensionless = [(i, j) for i, j in zip(self.f_i_star, self.T_star)]
 
         self.q_calc = pyo.Expression(self.points, rule=UnaryIsotherm.q_calc_expr)
         self.R2 = pyo.Expression(expr=self.R2_rule())
@@ -162,9 +147,24 @@ class UnaryIsotherm(pyo.ConcreteModel):
             (self.theta[i] - self.theta_calc[i]) * (self.theta[i] - self.theta_calc[i]) for i in self.points
         )
 
-    def solve_scipy(self):
+    def solve_scipy(self, loss='soft_l1', max_nfev=5000, bounds=None, **kwargs):
         from scipy.optimize import curve_fit
-        popt, pcov = curve_fit(func, x_fit, self.theta, bounds=(-500, 500), loss='soft_l1', max_nfev=5000)
+        if bounds is None:
+            bounds = (-500, 500)
+        return curve_fit(
+            self.eval_dimensionless, self.x_data_dimensionless, self.theta,
+            p0=self.initial_guess_vector(),
+            loss=loss, max_nfev=max_nfev, bounds=bounds
+        )
+
+    def initial_guess_vector(self):
+        raise NotImplementedError
+
+    def eval(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def eval_dimensionless(self, *args, **kwargs):
+        raise NotImplementedError
 
     def solve(self, solver=default_solver, **kwargs):
         """Solve constraints subject to objective function
@@ -272,12 +272,7 @@ class LangmuirUnary(UnaryIsotherm):
         # add variables
         self.H_i_star = pyo.Var(initialize=self.initial_guess_H_i_star())
         self.A_i = pyo.Var(initialize=self.initial_guess_A_i())
-        self.q_mi_star = pyo.Var(initialize=self.initial_guess_M_i_star())
-        if self.arrhenius_form == 'modified':
-            self.n_i = pyo.Var(initialize=0., bounds=(-10., 10.))
-        else:
-            assert self.arrhenius_form == 'default', 'Arrhenius form {} not found!'.format(self.arrhenius_form)
-            self.n_i = None
+        self.q_mi_star = pyo.Var(initialize=self.initial_guess_q_mi_star())
 
         # add expressions for dimensional quantities
         self.q_mi = pyo.Expression(expr=self.q_mi_star * self.q_ref)
@@ -305,7 +300,7 @@ class LangmuirUnary(UnaryIsotherm):
         """
         return -1.
 
-    def initial_guess_M_i_star(self):
+    def initial_guess_q_mi_star(self):
         r"""Initial guess for :math:`q_mi^\star` variable
 
         If :math:`q_\text{ref}` is chosen to be the saturation loading, :math:`q_mi^\star` will be 1.
@@ -313,28 +308,37 @@ class LangmuirUnary(UnaryIsotherm):
         """
         return 1.
 
-    def eval(self, f_i, T, q_mi, k_i_inf, dH_i, n_i):
+    def initial_guess_vector(self):
+        """:code:`p0` in scipy curve fit; initial guess for *dimensionless* parameters
+
+        .. note::
+            order here must be the same as last args in :meth:`.LangmuirUnary.eval_dimensionless`
+
+        """
+        return [
+            self.initial_guess_q_mi_star(),
+            self.initial_guess_A_i(),
+            self.initial_guess_H_i_star()
+        ]
+
+    def eval(self, f_i, T, q_mi, k_i_inf, dH_i):
         """evaluate using generic types (any type)"""
-        K = K_expr(k_i_inf, dH_i, T, f_i, n=n_i)
+        K = K_expr(k_i_inf, dH_i, T, f_i)
         return q_mi * K / (1. + K)
 
     def eval_pyomo(self, f_i, T):
         """evaluate using pyomo types (any type)"""
         return self.eval(
-            f_i, T, self.q_mi, self.k_i_inf, self.dH_i, self.n_i
+            f_i, T, self.q_mi, self.k_i_inf, self.dH_i
         )
 
-    def eval_dimensionless(self, f_i_star, T_star, q_mi_star, A_i, H_i_star, n_i, T_ref=None):
-        if T_ref is None:
-            T_ref = self.T_ref
-
-        K = K_star_expr(A=A_i, H_star=H_i_star, T_star=T_star,
-                        f_star=f_i_star, T_ref=T_ref, n=n_i)
+    def eval_dimensionless(self, f_i_star, T_star, q_mi_star, A_i, H_i_star):
+        K = K_star_expr(A=A_i, H_star=H_i_star, T_star=T_star, f_star=f_i_star)
         return q_mi_star * K / (1. + K)
 
     def eval_dimensionless_pyomo(self, f_i_star, T_star):
         return self.eval_dimensionless(
-            f_i_star, T_star, self.q_mi_star, self.A_i, self.H_i_star, self.n_i, T_ref=self.T_ref
+            f_i_star, T_star, self.q_mi_star, self.A_i, self.H_i_star
         )
 
     def isotherm_expression(self, point):
