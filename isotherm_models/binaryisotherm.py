@@ -139,32 +139,46 @@ class BinaryLangmuir(BinaryIsotherm, LangmuirUnary):
         self.isotherm_eq = pyo.Constraint(self.points, rule=BinaryLangmuir.isotherm_eq_rule)
         self.has_isotherm_variables = True
 
-    def eval(self, hat_f_i, hat_f_j, T):
+    def eval(self, hat_f_i, hat_f_j, T, k_i_inf, k_j_inf, dH_i, dH_j, n_i, n_j, q_mi):
+        K_i = K_expr(k_inf=k_i_inf, dH=dH_i, T=T, f=hat_f_i, n=n_i)
+        K_j = K_expr(k_inf=k_j_inf, dH=dH_j, T=T, f=hat_f_j, n=n_j)
+        return q_mi * K_i / (1. + K_i + K_j)
+
+    def eval_pyomo(self, hat_f_i, hat_f_j, T):
         """Evaluate isotherm in dimensional form"""
-        K_i = K_expr(k_inf=self.k_i_inf, dH=self.dH_i, T=T, f=hat_f_i, n=self.n_i)
-        K_j = K_expr(k_inf=self.k_j_inf, dH=self.dH_j, T=T, f=hat_f_j, n=self.n_j)
-        return self.q_mi * K_i / (1. + K_i + K_j)
+        return self.eval(hat_f_i, hat_f_j, T, self.k_i_inf, self.k_j_inf, self.dH_i, self.dH_j, self.n_i, self.n_j, self.q_mi)
 
     def isotherm_expression(self, point):
         """Isotherm expression in unit quantities, see Equation :eq:`eq_lang_binary`"""
         if point in self.unary_points:
-            return self.eval(self.hat_f_i[point], 0, self.T[point])
+            return self.eval_pyomo(self.hat_f_i[point], 0, self.T[point])
 
-        return self.eval(self.hat_f_i[point], self.hat_f_j[point], self.T[point])
+        return self.eval_pyomo(self.hat_f_i[point], self.hat_f_j[point], self.T[point])
 
-    def eval_dimensionless(self, hat_f_i_star, hat_f_j_star, T_star):
-        K_i = K_star_expr(A=self.A_i, H_star=self.H_i_star, T_star=T_star,
-                          f_star=hat_f_i_star, T_ref=self.T_ref, n=self.n_i)
-        K_j = K_star_expr(A=self.A_j, H_star=self.H_j_star, T_star=T_star,
-                          f_star=hat_f_j_star, T_ref=self.T_ref, n=self.n_j)
-        return self.q_mi_star * K_i / (1. + K_i + K_j)
+    def eval_dimensionless(self, hat_f_i_star, hat_f_j_star, T_star, A_i, A_j, H_i_star, H_j_star, n_i, n_j, q_mi_star, T_ref=None):
+        if T_ref is None:
+            T_ref = self.T_ref
+        K_i = K_star_expr(
+            A=self.A_i, H_star=H_i_star, T_star=T_star,
+            f_star=hat_f_i_star, T_ref=T_ref, n=n_i
+        )
+        K_j = K_star_expr(
+            A=self.A_j, H_star=H_j_star, T_star=T_star,
+            f_star=hat_f_j_star, T_ref=T_ref, n=n_j
+        )
+        return q_mi_star * K_i / (1. + K_i + K_j)
+
+    def eval_dimensionless_pyomo(self, hat_f_i_star, hat_f_j_star, T_star):
+        return self.eval_dimensionless(
+            hat_f_i_star, hat_f_j_star, T_star, self.A_i, self.A_j, self.H_i_star, self.H_j_star, self.n_i, self.n_j, self.q_mi_star, T_ref=self.T_ref
+        )
 
     def dimensionless_isotherm_expression(self, point):
         """Dimensionless isotherm expression, see Equation :eq:`eq_lang_binary_dimensionless`"""
         if point in self.unary_points:
-            return self.eval_dimensionless(self.hat_f_i_star[point], 0, self.T_star[point])
+            return self.eval_dimensionless_pyomo(self.hat_f_i_star[point], 0, self.T_star[point])
 
-        return self.eval_dimensionless(self.hat_f_i_star[point], self.hat_f_j_star[point], self.T_star[point])
+        return self.eval_dimensionless_pyomo(self.hat_f_i_star[point], self.hat_f_j_star[point], self.T_star[point])
 
     def display_results(self, **kwargs):
         super().display_results(**kwargs)

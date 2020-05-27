@@ -2,6 +2,9 @@
 Real Adsorbed Solution Theory
 =============================
 
+.. todo::
+    implement this into the code
+
 The *Gibbs adsorption isotherm* is
 
 .. math::

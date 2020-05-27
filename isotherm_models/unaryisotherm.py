@@ -162,6 +162,10 @@ class UnaryIsotherm(pyo.ConcreteModel):
             (self.theta[i] - self.theta_calc[i]) * (self.theta[i] - self.theta_calc[i]) for i in self.points
         )
 
+    def solve_scipy(self):
+        from scipy.optimize import curve_fit
+        popt, pcov = curve_fit(func, x_fit, self.theta, bounds=(-500, 500), loss='soft_l1', max_nfev=5000)
+
     def solve(self, solver=default_solver, **kwargs):
         """Solve constraints subject to objective function
 
@@ -309,22 +313,37 @@ class LangmuirUnary(UnaryIsotherm):
         """
         return 1.
 
-    def eval(self, f_i, T):
-        K = K_expr(self.k_i_inf, self.dH_i, T, f_i, n=self.n_i)
-        return self.q_mi * K / (1. + K)
+    def eval(self, f_i, T, q_mi, k_i_inf, dH_i, n_i):
+        """evaluate using generic types (any type)"""
+        K = K_expr(k_i_inf, dH_i, T, f_i, n=n_i)
+        return q_mi * K / (1. + K)
 
-    def eval_dimensionless(self, f_i_star, T_star):
-        K = K_star_expr(A=self.A_i, H_star=self.H_i_star, T_star=T_star,
-                          f_star=f_i_star, T_ref=self.T_ref, n=self.n_i)
-        return self.q_mi_star * K / (1. + K)
+    def eval_pyomo(self, f_i, T):
+        """evaluate using pyomo types (any type)"""
+        return self.eval(
+            f_i, T, self.q_mi, self.k_i_inf, self.dH_i, self.n_i
+        )
+
+    def eval_dimensionless(self, f_i_star, T_star, q_mi_star, A_i, H_i_star, n_i, T_ref=None):
+        if T_ref is None:
+            T_ref = self.T_ref
+
+        K = K_star_expr(A=A_i, H_star=H_i_star, T_star=T_star,
+                        f_star=f_i_star, T_ref=T_ref, n=n_i)
+        return q_mi_star * K / (1. + K)
+
+    def eval_dimensionless_pyomo(self, f_i_star, T_star):
+        return self.eval_dimensionless(
+            f_i_star, T_star, self.q_mi_star, self.A_i, self.H_i_star, self.n_i, T_ref=self.T_ref
+        )
 
     def isotherm_expression(self, point):
         """Isotherm expression in unit quantities, see Equation :eq:`eq_lang_unary`"""
-        return self.eval(self.f_i[point], self.T[point])
+        return self.eval_pyomo(self.f_i[point], self.T[point])
 
     def dimensionless_isotherm_expression(self, point):
         """Dimensionless isotherm expression, see Equation :eq:`eq_lang_unary_dimensionless`"""
-        return self.eval_dimensionless(self.f_i_star[point], self.T_star[point])
+        return self.eval_dimensionless_pyomo(self.f_i_star[point], self.T_star[point])
 
     def display_results(self, **kwargs):
         super().display_results(**kwargs)

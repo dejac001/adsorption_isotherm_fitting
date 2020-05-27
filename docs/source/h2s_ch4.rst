@@ -202,13 +202,13 @@ Which looks like
 Having fit the isotherms, we can now evaluate them at arbitrary fugacities and temperatures.
 We get the same answer whether we use units or dimensional quantities
 
->>> pyo.value(h2s_unary.eval(h2s_unary.f_ref, h2s_unary.T_ref) - h2s_unary.q_ref*h2s_unary.eval_dimensionless(1., 1.))
+>>> pyo.value(h2s_unary.eval_pyomo(h2s_unary.f_ref, h2s_unary.T_ref) - h2s_unary.q_ref*h2s_unary.eval_dimensionless_pyomo(1., 1.))
 0.0
 
 
 >>> pyo.value(
-... h2s_binary.eval(h2s_binary.f_ref, h2s_binary.f_ref, h2s_binary.T_ref)
-... - h2s_binary.q_ref*h2s_binary.eval_dimensionless(1., 1., 1.)
+... h2s_binary.eval_pyomo(h2s_binary.f_ref, h2s_binary.f_ref, h2s_binary.T_ref)
+... - h2s_binary.q_ref*h2s_binary.eval_dimensionless_pyomo(1., 1., 1.)
 ... )
 0.0
 
