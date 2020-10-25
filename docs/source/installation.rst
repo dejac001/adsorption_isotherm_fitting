@@ -25,4 +25,4 @@ Scipy Only
 .. code-block:: bash
 
     pip3 install Pyomo chem-util matplotlib pandas numpy realgas>=1.0.2
-    python3 -m pip3 install https://github.com/dejac001/adsorption_isotherm_fitting/archive/v0.0.4.tar.gz
+    python3 -m pip3 install https://github.com/dejac001/adsorption_isotherm_fitting/archive/v0.0.5.tar.gz
