@@ -20,8 +20,8 @@ setuptools.setup(
     ],
     python_requires='>=3.6',
     install_requires=[
-        "matplotlib==3.2.1", "numpy==1.18.4", "scipy==1.4.1",
-        "chem-util==0.0.4", "pandas==1.0.3", "realgas==1.0.2",
-        "Pyomo==5.6.9"
+        "matplotlib>=3.2.1", "numpy>=1.18.4", "scipy>=1.4.1",
+        "chem-util>=0.0.4", "pandas>=1.0.3", "realgas>=1.0.2",
+        "Pyomo>=5.6.9"
     ]
 )
